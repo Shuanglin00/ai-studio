@@ -15,3 +15,12 @@ langchain4j:
         api-key: AIzaSyDf8AumGRKxpZwWGVTYsr3hlxeXZPQ9quQ
         model-name: gemini-2.0-flash
         temperature: 0.7
+      embedding-model:
+        projectId: tensile-yen-464506-a5
+        location: us-central1
+        modelName: gemini-1.5-flash
+    qwen:
+      embedding-model:
+        api-key: sk-ef837a5f684c4ed087802c948857df5f
+        location: us-central1
+        modelName: text-embedding-v2

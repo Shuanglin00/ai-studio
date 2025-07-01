@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config.vo.gemini;
+package com.shuanglin.bot.langchain4j.config.vo.qwen;
 
 import com.shuanglin.bot.langchain4j.config.vo.base.ChatModelProperties;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -6,14 +6,12 @@ import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.googleai.GeminiFunctionCallingConfig;
 import dev.langchain4j.model.googleai.GeminiSafetySetting;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.Duration;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class GeminiApiProperty extends ChatModelProperties {
+public class QwenApiProperty extends ChatModelProperties {
 	String apiKey;
 	String modelName;
 	Integer maxRetries;

@@ -1,6 +1,7 @@
 package com.shuanglin.bot.langchain4j.config.vo;
 
 import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiApiProperty;
+import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiEmbeddingModelProperty;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -12,4 +13,7 @@ public class GeminiProperties {
 
 	@NestedConfigurationProperty
 	GeminiApiProperty apiModel;
+
+	@NestedConfigurationProperty
+	GeminiEmbeddingModelProperty embeddingModel;
 }

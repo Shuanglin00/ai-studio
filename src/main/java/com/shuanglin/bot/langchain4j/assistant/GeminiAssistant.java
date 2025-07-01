@@ -17,8 +17,8 @@ public interface GeminiAssistant  {
 	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @return
 	 */
-	@SystemMessage(value = "You are a helpful assistant. You will answer the user's question based on the role: {{role}}.")
 	@UserMessage(value = "User: {{question}}")
+	@SystemMessage(value = "You are a helpful assistant. You will answer the user's question based on the role: {{role}}.")
 	String chat(
 			@V("role") String role,
 			@V("question") String question);

@@ -1,6 +1,5 @@
 package com.shuanglin.bot.langchain4j.config;
 
-import com.google.gson.Gson;
 import com.mongodb.client.result.UpdateResult;
 import com.shuanglin.bot.config.DBMessageDTO;
 import dev.langchain4j.data.message.ChatMessage;
@@ -29,6 +28,7 @@ public class RedisMemoryStore implements ChatMemoryStore {
 
 	@Override
 	public List<ChatMessage> getMessages(Object memoryId) {
+		System.out.println("[Memory] 加载历史, memoryId=" + memoryId);
 		String redisMessage = redisTemplate.opsForValue().get(memoryId.toString());
 		if (redisMessage == null) {
 			Query query = new Query(Criteria.where("memoryId").is(memoryId));
@@ -47,6 +47,7 @@ public class RedisMemoryStore implements ChatMemoryStore {
 
 	@Override
 	public void updateMessages(Object memoryId, List<ChatMessage> list) {
+		System.out.println("[Memory] 保存历史, memoryId=" + memoryId + ", 条数=" + list.size());
 		System.out.println("list = " + list);
 		Criteria criteria = Criteria.where("memoryId").is(memoryId);
 		Query query = new Query(criteria);
@@ -62,6 +63,7 @@ public class RedisMemoryStore implements ChatMemoryStore {
 
 	@Override
 	public void deleteMessages(Object memoryId) {
+		System.out.println("[Memory] 删除历史, memoryId=" + memoryId);
 		Criteria criteria = Criteria.where("memoryId").is(memoryId);
 		Query query = new Query(criteria);
 		mongoTemplate.remove(query, DBMessageDTO.class);

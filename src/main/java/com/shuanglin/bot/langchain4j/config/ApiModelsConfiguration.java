@@ -2,22 +2,18 @@ package com.shuanglin.bot.langchain4j.config;
 
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
+import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiApiProperty;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.rag.RetrievalAugmentor;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.store.memory.chat.ChatMemoryStore;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,7 +23,7 @@ import java.util.List;
  * @date 2025/06/27
  */
 @Configuration
-@EnableConfigurationProperties(GeminiProperties.class)
+@EnableConfigurationProperties({GeminiProperties.class, QwenProperties.class})
 public class ApiModelsConfiguration {
 
 	@Bean
@@ -56,17 +52,18 @@ public class ApiModelsConfiguration {
 	}
 	@Bean
 	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel googleAiGeminiChatModel,
-	                                   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
-										   RedisMemoryStore redisMemoryStore) {
+	                                       GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
+	                                       RetrievalAugmentor retrievalAugmentor) {
 
 		return AiServices.builder(GeminiAssistant.class)
 				.chatModel(googleAiGeminiChatModel)
 				.streamingChatModel(googleAiGeminiStreamingChatModel)
-				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
-						.id(memoryId)
-						.maxMessages(10)
-						.chatMemoryStore(redisMemoryStore)
-						.build())
+//				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
+//						.id(memoryId)
+//						.maxMessages(10)
+//						.chatMemoryStore(redisMemoryStore)
+//						.build())
+				.retrievalAugmentor(retrievalAugmentor)
 				.build();
 	}
 
