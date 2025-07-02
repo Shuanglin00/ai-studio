@@ -2,11 +2,16 @@ spring:
   application:
     name: ai-chat
   data:
+#    redis:
+#      database: 1
+#      host: 192.168.31.105
+#    mongodb:
+#      uri: mongodb://192.168.31.105:27017/chatDB
     redis:
       database: 1
-      host: 192.168.31.105
+      host: localhost
     mongodb:
-      uri: mongodb://192.168.31.105:27017/chatDB
+      uri: mongodb://172.18.32.160:27017/chatDB
 
 langchain4j:
   models:

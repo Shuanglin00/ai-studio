@@ -20,6 +20,7 @@ public interface GeminiAssistant  {
 	@UserMessage(value = "User: {{question}}")
 	@SystemMessage(value = "You are a helpful assistant. You will answer the user's question based on the role: {{role}}.")
 	String chat(
+			@MemoryId String sessionId,
 			@V("role") String role,
 			@V("question") String question);
 

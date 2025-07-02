@@ -9,6 +9,7 @@ import dev.langchain4j.rag.content.aggregator.DefaultContentAggregator;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.rag.query.transformer.DefaultQueryTransformer;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -35,11 +36,6 @@ public class RagConfiguration {
 				.maxResults(10)
 				//最小匹配分数，可以理解为 where score >= 0.5
 				.minScore(0.50)
-				/*
-				过滤条件，可以理解为where ......
-					注意，如果此处使用的是redis向量数据库，查询条件字段必须包含在索引中（其它数据库未验证）
-				*/
-				//  filter方法，用于与查询无关的过滤条件
 				//.filter()
 				//  dynamicFilter方法，用户与查询有关的过滤条件。例如：知识库中的文档有权限限制，根据每个人的权限查询出不同的文档
 				.dynamicFilter(query -> {
@@ -59,7 +55,7 @@ public class RagConfiguration {
 
 		return DefaultRetrievalAugmentor.builder()
 				.queryTransformer(queryTransformer)
-//				.queryRouter(queryRouter)
+				.queryRouter(new DefaultQueryRouter())
 				.contentAggregator(contentAggregator)
 				.contentInjector(defaultContentInjector)
 				.build();

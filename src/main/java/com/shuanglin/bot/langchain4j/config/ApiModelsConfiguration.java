@@ -53,17 +53,19 @@ public class ApiModelsConfiguration {
 	@Bean
 	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel googleAiGeminiChatModel,
 	                                       GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
-	                                       RetrievalAugmentor retrievalAugmentor) {
+	                                       RedisMemoryStore redisMemoryStore
+//	                                       RetrievalAugmentor retrievalAugmentor
+	) {
 
 		return AiServices.builder(GeminiAssistant.class)
 				.chatModel(googleAiGeminiChatModel)
 				.streamingChatModel(googleAiGeminiStreamingChatModel)
-//				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
-//						.id(memoryId)
-//						.maxMessages(10)
-//						.chatMemoryStore(redisMemoryStore)
-//						.build())
-				.retrievalAugmentor(retrievalAugmentor)
+				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
+						.id(memoryId)
+						.maxMessages(10)
+						.chatMemoryStore(redisMemoryStore)
+						.build())
+//				.retrievalAugmentor(retrievalAugmentor)
 				.build();
 	}
 

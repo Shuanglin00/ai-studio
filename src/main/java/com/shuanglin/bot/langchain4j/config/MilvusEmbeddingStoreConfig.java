@@ -4,6 +4,8 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
+import io.milvus.client.MilvusServiceClient;
+import io.milvus.param.ConnectParam;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,9 +25,9 @@ public class MilvusEmbeddingStoreConfig {
 	public MilvusEmbeddingStore milvusEmbeddingStore() {
 		// 替换为你的Milvus连接参数
 		return MilvusEmbeddingStore.builder()
-				.host("localhost")
+				.host("172.18.32.160")
 				.port(19530)
-				.collectionName("your_collection")
+				.collectionName("rag_embedding_collection")
 				.build();
 	}
 	@Bean

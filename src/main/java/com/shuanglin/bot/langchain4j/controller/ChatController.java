@@ -24,12 +24,12 @@ public class ChatController {
 	@GetMapping("/ask")
 	public String ask(
 	                  @RequestParam(value = "role", required = false, defaultValue = "智能问答助手") String role,
+	                  @RequestParam(value = "memoryId", required = false, defaultValue = "智能问答助手") String memoryId,
 	                  @RequestParam(value = "question") String question){
 		// 日志入口
-		System.out.println("[Controller] userId=" + role + ", question=" + question);
-
-		String answer= geminiAssistant.chat(role, question);
-		System.out.println("[Controller] userId=" + role + ", answer=" + answer);
+		System.out.println("[Controller] userId=" + memoryId + ", question=" + question);
+		String answer= geminiAssistant.chat(memoryId,role, question);
+		System.out.println("[Controller] userId=" + memoryId + ", answer=" + answer);
 		return answer;
 	}
 

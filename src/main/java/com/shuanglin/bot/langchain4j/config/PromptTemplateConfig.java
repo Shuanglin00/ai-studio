@@ -2,7 +2,6 @@ package com.shuanglin.bot.langchain4j.config;
 
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
-import lombok.Data;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
