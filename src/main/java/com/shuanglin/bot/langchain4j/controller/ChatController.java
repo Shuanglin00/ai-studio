@@ -25,11 +25,10 @@ public class ChatController {
 	public String ask(
 	                  @RequestParam(value = "role", required = false, defaultValue = "智能问答助手") String role,
 	                  @RequestParam(value = "memoryId", required = false, defaultValue = "智能问答助手") String memoryId,
+	                  @RequestParam(value = "userId", required = false, defaultValue = "123") String userId,
 	                  @RequestParam(value = "question") String question){
 		// 日志入口
-		System.out.println("[Controller] userId=" + memoryId + ", question=" + question);
-		String answer= geminiAssistant.chat(memoryId,role, question);
-		System.out.println("[Controller] userId=" + memoryId + ", answer=" + answer);
+		String answer= geminiAssistant.chat(memoryId,role,userId, question);
 		return answer;
 	}
 

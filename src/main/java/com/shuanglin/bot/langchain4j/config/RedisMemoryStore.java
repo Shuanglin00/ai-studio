@@ -47,8 +47,8 @@ public class RedisMemoryStore implements ChatMemoryStore {
 
 	@Override
 	public void updateMessages(Object memoryId, List<ChatMessage> list) {
-		System.out.println("[Memory] 保存历史, memoryId=" + memoryId + ", 条数=" + list.size());
 		System.out.println("list = " + list);
+		// 分爲userMessage 和AiMessage 需要抽離分開存儲 獲取的時候只獲取userMessage 拼接 至於AiMessage後續再看
 		Criteria criteria = Criteria.where("memoryId").is(memoryId);
 		Query query = new Query(criteria);
 		Update update = new Update();

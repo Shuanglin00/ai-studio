@@ -10,7 +10,6 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.SearchReq;
-import io.milvus.v2.service.vector.request.data.BaseVector;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +57,7 @@ public class DBContentRetriever implements ContentRetriever {
 	@Override
 	public List<Content> retrieve(Query query) {
 		log.info("==================== [START] Retrieval Process ====================");
+		// 消息 自动凭借 存入数据库需要根据相同memoryId覆盖 多个memory
 		try {
 			// -------------------- 步骤 1: 向量化查询文本 --------------------
 			String queryText = query.text();

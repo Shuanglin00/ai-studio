@@ -10,15 +10,15 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class EmbeddingConfig {
-	@Bean
-	@Primary
-	public EmbeddingModel qwenEmbeddingModel(QwenProperties qwenProperties) {
-		EmbeddingModelProperties properties = qwenProperties.getEmbeddingModel();
-		return QwenEmbeddingModel.builder()
-				.apiKey(properties.getApiKey())
-				.modelName(properties.getModelName())
-				.build();
-	}
+    @Bean
+    @Primary
+    public EmbeddingModel qwenEmbeddingModel(QwenProperties qwenProperties) {
+        EmbeddingModelProperties properties = qwenProperties.getEmbeddingModel();
+        return QwenEmbeddingModel.builder()
+                .apiKey(properties.getApiKey())
+                .modelName(properties.getModelName())
+                .build();
+    }
 
 //	@Bean
 //	public EmbeddingModel embeddingModel() {
