@@ -9,6 +9,7 @@ import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -53,8 +54,10 @@ public class ApiModelsConfiguration {
 	@Bean
 	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel googleAiGeminiChatModel,
 	                                       GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
-	                                       RedisMemoryStore redisMemoryStore
+	                                       RedisMemoryStore redisMemoryStore,
+	                                       ContentRetriever dbContentRetriever
 //	                                       RetrievalAugmentor retrievalAugmentor
+
 	) {
 
 		return AiServices.builder(GeminiAssistant.class)
@@ -65,6 +68,7 @@ public class ApiModelsConfiguration {
 						.maxMessages(10)
 						.chatMemoryStore(redisMemoryStore)
 						.build())
+				.contentRetriever(dbContentRetriever)
 //				.retrievalAugmentor(retrievalAugmentor)
 				.build();
 	}

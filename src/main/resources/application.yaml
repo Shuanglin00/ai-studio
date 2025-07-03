@@ -11,8 +11,18 @@ spring:
       database: 1
       host: localhost
     mongodb:
-      uri: mongodb://172.18.32.160:27017/chatDB
-
+      host: 172.18.32.160
+      port: 27017
+      database: chatDB
+      username: 'shuanglin'
+      password: '123456'
+      authentication-database: admin
+    milvus:
+        url: http://172.18.32.160:19530
+        host: 172.18.32.160
+        port: 19530
+        defaultDatabaseName: chatEmbeddingDB
+        defaultCollectionName: rag_embedding_collection
 langchain4j:
   models:
     gemini:

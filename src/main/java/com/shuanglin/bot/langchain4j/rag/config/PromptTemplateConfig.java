@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config;
+package com.shuanglin.bot.langchain4j.rag.config;
 
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
