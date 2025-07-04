@@ -1,19 +1,6 @@
 package com.shuanglin.bot.langchain4j.rag.config;
 
-import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.rag.DefaultRetrievalAugmentor;
-import dev.langchain4j.rag.RetrievalAugmentor;
-import dev.langchain4j.rag.content.aggregator.DefaultContentAggregator;
-import dev.langchain4j.rag.content.injector.DefaultContentInjector;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
-import dev.langchain4j.rag.query.router.DefaultQueryRouter;
-import dev.langchain4j.rag.query.transformer.DefaultQueryTransformer;
-import dev.langchain4j.store.embedding.EmbeddingStore;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class RagConfiguration {

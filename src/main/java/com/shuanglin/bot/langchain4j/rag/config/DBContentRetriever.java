@@ -93,7 +93,7 @@ public class DBContentRetriever implements ContentRetriever {
 				log.info("==================== [END] Retrieval Process (No Results) ====================");
 				return List.of();
 			}
-
+			System.out.println("searchResult.getSearchResults() = " + searchResult.getSearchResults());
 			// **【关键修正】** 从 EmbeddingMatch 中提取 ID 列表
 			List<String> memoryIds = searchResult.getSearchResults().stream()
 					.map(list -> {

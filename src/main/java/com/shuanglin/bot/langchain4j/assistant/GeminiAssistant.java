@@ -18,9 +18,9 @@ public interface GeminiAssistant  {
 	 * @return
 	 */
 	@UserMessage(value = "{{question}}")
-	@SystemMessage(value = "You are a helpful assistant. You will answer the user's question based on the role: {{role}}.")
+	@SystemMessage(value = "使用中文回答")
 	String chat(
-			@MemoryId String sessionId,
+			@MemoryId String memoryId,
 			@V("role") String role,
 			@UserName String userid,
 			@V("question") String question);

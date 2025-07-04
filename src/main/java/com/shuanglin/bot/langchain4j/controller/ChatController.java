@@ -23,9 +23,9 @@ public class ChatController {
 
 	@GetMapping("/ask")
 	public String ask(
+	                  @RequestParam(value = "memoryId", required = false) String memoryId,
 	                  @RequestParam(value = "role", required = false, defaultValue = "智能问答助手") String role,
-	                  @RequestParam(value = "memoryId", required = false, defaultValue = "智能问答助手") String memoryId,
-	                  @RequestParam(value = "userId", required = false, defaultValue = "123") String userId,
+	                  @RequestParam(value = "userId", required = false) String userId,
 	                  @RequestParam(value = "question") String question){
 		// 日志入口
 		String answer= geminiAssistant.chat(memoryId,role,userId, question);
