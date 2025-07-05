@@ -8,6 +8,7 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
@@ -52,16 +53,16 @@ public class ApiModelsConfiguration {
 				.build();
 	}
 	@Bean
-	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel googleAiGeminiChatModel,
-	                                       GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
-	                                       RedisMemoryStore redisMemoryStore,
-	                                       ContentRetriever dbContentRetriever
+	public GeminiAssistant geminiAssistant(OpenAiChatModel localLLMModel,
+										   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
+										   RedisMemoryStore redisMemoryStore,
+										   ContentRetriever dbContentRetriever
 //	                                       RetrievalAugmentor retrievalAugmentor
 
 	) {
 
 		return AiServices.builder(GeminiAssistant.class)
-				.chatModel(googleAiGeminiChatModel)
+				.chatModel(localLLMModel)
 				.streamingChatModel(googleAiGeminiStreamingChatModel)
 				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
 						.id(memoryId)

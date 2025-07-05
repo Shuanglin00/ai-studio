@@ -4,22 +4,22 @@ spring:
   data:
 #    redis:
 #      database: 1
-#      host: 192.168.31.105
+#      host: 
 #    mongodb:
-#      uri: mongodb://192.168.31.105:27017/chatDB
+#      uri: mongodb://:27017/chatDB
     redis:
       database: 1
-      host: 172.18.32.160
+      host: 192.168.31.105
     mongodb:
-      host: 172.18.32.160
+      host: 192.168.31.105
       port: 27017
       database: chatDB
       username: 'shuanglin'
       password: '123456'
       authentication-database: admin
     milvus:
-        url: http://172.18.32.160:19530
-        host: 172.18.32.160
+        url: http://192.168.31.105:19530
+        host: 192.168.31.105
         port: 19530
         defaultDatabaseName: chatEmbeddingDB
         defaultCollectionName: rag_embedding_collection

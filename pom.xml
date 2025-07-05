@@ -122,6 +122,12 @@
             <artifactId>langchain4j-community-dashscope</artifactId>
             <version>1.1.0-beta7</version>
         </dependency>
+<!--        本地模型调用-->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-local-ai</artifactId>
+            <version>1.1.0-beta7</version>
+        </dependency>
 
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -151,6 +157,13 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>5.8.35</version>
+        </dependency>
+
+<!--        中文分词-支持自定义词库-->
+        <dependency>
+            <groupId>org.ansj</groupId>
+            <artifactId>ansj_seg</artifactId>
+            <version>5.1.6</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.github.admin4j/http -->
