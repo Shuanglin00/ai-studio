@@ -23,6 +23,9 @@ spring:
         port: 19530
         defaultDatabaseName: chatEmbeddingDB
         defaultCollectionName: rag_embedding_collection
+  servlet:
+    multipart:
+      max-file-size: 20MB
 langchain4j:
   models:
     gemini:

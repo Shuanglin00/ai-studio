@@ -53,7 +53,7 @@ public class ApiModelsConfiguration {
 				.build();
 	}
 	@Bean
-	public GeminiAssistant geminiAssistant(OpenAiChatModel localLLMModel,
+	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel localLLMModel,
 										   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
 										   RedisMemoryStore redisMemoryStore,
 										   ContentRetriever dbContentRetriever

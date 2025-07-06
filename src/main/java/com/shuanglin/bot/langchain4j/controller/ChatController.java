@@ -2,15 +2,20 @@ package com.shuanglin.bot.langchain4j.controller;
 
 import com.google.gson.Gson;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
+import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import dev.langchain4j.service.TokenStream;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import retrofit2.http.Multipart;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
 
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 
@@ -20,6 +25,9 @@ public class ChatController {
 
 	@Autowired
 	private GeminiAssistant geminiAssistant;
+
+	@Resource
+	private DocumentInitializer documentInitializer;
 
 	@GetMapping("/ask")
 	public String ask(
@@ -85,4 +93,20 @@ public class ChatController {
 		return sink.asFlux();
 	}
 
+	@PostMapping("/readFile")
+	public void readDocumentFromStream(HttpServletRequest request, @RequestParam("file") MultipartFile multiFile) {
+		try {
+			// 获取文件名
+			String fileName = multiFile.getOriginalFilename();
+			// 获取文件后缀
+			String prefix = fileName.substring(fileName.lastIndexOf("."));
+			// 若需要防止生成的临时文件重复,可以在文件名后添加随机码
+			File file = File.createTempFile(fileName, prefix);
+			multiFile.transferTo(file);
+
+			String s = documentInitializer.readFile(file);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

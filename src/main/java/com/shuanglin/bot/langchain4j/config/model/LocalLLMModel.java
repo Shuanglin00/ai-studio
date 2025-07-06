@@ -7,12 +7,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LocalLLMModel {
 
-    @Bean
-    OpenAiChatModel localLLMModel() {
-        return OpenAiChatModel.builder()
-                .baseUrl("http://localhost:1234/v1/chat/completions")
-                .modelName("Local-Gemma3")
-                .build();
-    }
+//    @Bean
+//    OpenAiChatModel localLLMModel() {
+//        return OpenAiChatModel.builder()
+//                .baseUrl("http://localhost:1234/v1/chat/completions")
+//                .modelName("Local-Gemma3")
+//                .build();
+//    }
 
 }

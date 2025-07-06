@@ -90,6 +90,7 @@ public class RedisMemoryStore implements ChatMemoryStore {
 		Update update = new Update();
 		update.set("content", ChatMessageSerializer.messagesToJson(list));
 		update.set("userId", userId);
+		update.set("memoryId", memoryId);
 		update.set("lastChatTime", System.currentTimeMillis());
 		UpdateResult upsert = mongoTemplate.upsert(query, update, DBMessageDTO.class);
 		JsonObject jsonObject = new Gson().toJsonTree(EmbeddingEntity.builder()
