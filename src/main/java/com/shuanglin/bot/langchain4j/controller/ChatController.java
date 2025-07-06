@@ -30,12 +30,14 @@ public class ChatController {
 	private DocumentInitializer documentInitializer;
 
 	@GetMapping("/ask")
-	public String ask(
+	public String ask(HttpServletRequest request,
 	                  @RequestParam(value = "memoryId", required = false) String memoryId,
 	                  @RequestParam(value = "role", required = false, defaultValue = "智能问答助手") String role,
 	                  @RequestParam(value = "userId", required = false) String userId,
 	                  @RequestParam(value = "question") String question){
 		// 日志入口
+		request.setAttribute("memoryId", memoryId);
+		request.setAttribute("userId", userId);
 		String answer= geminiAssistant.chat(memoryId,role,userId, question);
 		return answer;
 	}
@@ -104,7 +106,7 @@ public class ChatController {
 			File file = File.createTempFile(fileName, prefix);
 			multiFile.transferTo(file);
 
-			String s = documentInitializer.readFile(file);
+			String s = documentInitializer.readFile(request,file);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

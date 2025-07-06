@@ -12,10 +12,9 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.InsertReq;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; // 导入 SLF4J 日志
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -27,6 +26,7 @@ import utils.FileReadUtil;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,25 +56,16 @@ public class DocumentInitializer {
 	@Resource
 	MongoTemplate mongoTemplate;
 
-	/**
-	 * 读取指定路径的文件内容，处理后存储文本段落及其嵌入向量。
-	 *
-	 * @param file 要读取的文件。
-	 * @return 插入数据的 Milvus 集合名称。
-	 * @throws FileProcessingException 如果文件读取或处理过程中发生错误。
-	 */
-	public String readFile(File file) {
+	public String readFile(HttpServletRequest request, File file) {
 		if (file == null || !file.exists()) {
 			log.error("尝试读取空文件或不存在的文件。");
-			throw new FileProcessingException("文件不存在或为空。"); // 抛出自定义异常
 		}
 		try {
 			String fileContent = FileReadUtil.readFileContent(file);
 			log.info("成功读取文件内容，文件路径: {}", file.getAbsolutePath());
-			readDocumentFromStr(fileContent);
+			readDocumentFromStr(request,fileContent);
 		} catch (IOException | InvalidFormatException e) {
 			log.error("读取文件 {} 时发生错误: {}", file.getAbsolutePath(), e.getMessage(), e);
-			throw new FileProcessingException("文件处理失败: " + e.getMessage(), e); // 抛出自定义异常
 		}
 		return defaultCollectionName;
 	}
@@ -84,7 +75,10 @@ public class DocumentInitializer {
 	 *
 	 * @param str 要处理的文档字符串。
 	 */
-	private void readDocumentFromStr(String str) {
+	private void readDocumentFromStr(HttpServletRequest request,String str) {
+		String userId = request.getAttribute("userId").toString();
+		String groupId = request.getAttribute("groupId").toString();
+		String memoryId1 = request.getAttribute("memoryId").toString();
 		Document document = Document.from(str);
 		// 使用递归分割器，分块大小 300，重叠 0
 		DocumentSplitter recursive = DocumentSplitters.recursive(300, 0);
@@ -124,7 +118,8 @@ public class DocumentInitializer {
 			DBMessageDTO dbMessage = new DBMessageDTO();
 			dbMessage.setMemoryId(memoryId); // 使用雪花 ID 作为 memoryId
 			dbMessage.setContent(textSegment.text()); // 只存储文本内容，而不是整个 TextSegment 对象
-			dbMessage.setUserId(DEFAULT_USER_ID);
+			dbMessage.setUserId(userId);
+			dbMessage.setGroupId(groupId);
 			dbMessage.setLastChatTime(System.currentTimeMillis());
 			mongoUpsertData.add(dbMessage);
 		});
@@ -156,7 +151,8 @@ public class DocumentInitializer {
 					Update update = new Update()
 							.set("content", message.getContent())
 							.set("userId", message.getUserId())
-							.set("memoryId", message.getMemoryId());
+							.set("groupId", message.getGroupId())
+							.set("memoryId", message.getMemoryId())
 							.set("lastChatTime", message.getLastChatTime());
 					mongoTemplate.upsert(query, update, DBMessageDTO.class);
 				}
@@ -166,16 +162,5 @@ public class DocumentInitializer {
 				// 考虑在这里抛出异常或进行回滚
 			}
 		}
-	}
-}
-
-// 定义一个自定义运行时异常，用于文件处理错误
-class FileProcessingException extends RuntimeException {
-	public FileProcessingException(String message) {
-		super(message);
-	}
-
-	public FileProcessingException(String message, Throwable cause) {
-		super(message, cause);
 	}
 }
