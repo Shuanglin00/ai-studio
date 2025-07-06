@@ -1,2 +1,2 @@
 # ai-studio
-base langchain4j + local llms +springboot
+base langchain4j + local lmstudio +springboot
