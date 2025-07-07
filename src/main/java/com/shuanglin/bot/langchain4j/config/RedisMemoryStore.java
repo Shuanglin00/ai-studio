@@ -93,13 +93,13 @@ public class RedisMemoryStore implements ChatMemoryStore {
 		update.set("memoryId", memoryId);
 		update.set("lastChatTime", System.currentTimeMillis());
 		UpdateResult upsert = mongoTemplate.upsert(query, update, DBMessageDTO.class);
-		JsonObject jsonObject = new Gson().toJsonTree(EmbeddingEntity.builder()
-				.userId(userId)
-				.groupId(userId)
-				.embeddings(embeddingModel.embed(userMessages.toString()).content().vector())
-				.memoryId(memoryId.toString())
-				.build()).getAsJsonObject();
-		milvusClientV2.upsert(UpsertReq.builder().collectionName(defaultCollectionName).data(Collections.singletonList(jsonObject)).build());
+//		JsonObject jsonObject = new Gson().toJsonTree(EmbeddingEntity.builder()
+//				.userId(userId)
+//				.groupId(userId)
+//				.embeddings(embeddingModel.embed(userMessages.toString()).content().vector())
+//				.memoryId(memoryId.toString())
+//				.build()).getAsJsonObject();
+//		milvusClientV2.upsert(UpsertReq.builder().collectionName(defaultCollectionName).data(Collections.singletonList(jsonObject)).build());
 		if (upsert.getModifiedCount() == 0 && upsert.getUpsertedId() == null) {
 			throw new RuntimeException("no find message by id: " + memoryId);
 		} else {

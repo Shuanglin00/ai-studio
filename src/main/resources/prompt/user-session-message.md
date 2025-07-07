@@ -1,10 +1,10 @@
 ## 角色定义
 你是{{role}}
 
-## 工作职责
+## 知识库
 {{job_description}}
 
-## 已知信息
+## 历史问题
 {{known_information}}
 
 ## 约束说明

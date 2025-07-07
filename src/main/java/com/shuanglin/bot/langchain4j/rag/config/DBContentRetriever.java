@@ -1,5 +1,8 @@
 package com.shuanglin.bot.langchain4j.rag.config;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.shuanglin.bot.config.DBMessageDTO;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -95,10 +98,8 @@ public class DBContentRetriever implements ContentRetriever {
 			}
 			System.out.println("searchResult.getSearchResults() = " + searchResult.getSearchResults());
 			// **【关键修正】** 从 EmbeddingMatch 中提取 ID 列表
-			List<String> memoryIds = searchResult.getSearchResults().stream()
-					.map(list -> {
-						return list.get(0).getEntity().get("memoryId").toString();
-					})
+			List<String> memoryIds = searchResult.getSearchResults().get(0).stream()
+					.map(match -> match.getId().toString()) // 假设 ID 是字符串类型
 					.collect(Collectors.toList());
 			log.info("[Step 3] Extracted memory IDs from search result: {}", memoryIds);
 
@@ -106,7 +107,7 @@ public class DBContentRetriever implements ContentRetriever {
 			// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
 			// **【关键修正】** 使用 'in' 而不是 'is'
 			org.springframework.data.mongodb.core.query.Query mongoDbQuery =
-					new org.springframework.data.mongodb.core.query.Query(Criteria.where("_id").in(memoryIds)); // 假设你的主键字段是 _id
+					new org.springframework.data.mongodb.core.query.Query(Criteria.where("memoryId").in(memoryIds)); // 假设你的主键字段是 _id
 
 			log.info("[Step 4] Querying MongoDB with {} IDs.", memoryIds.size());
 
@@ -133,7 +134,7 @@ public class DBContentRetriever implements ContentRetriever {
 //								.put("user_id", document.getUserId())
 //								.put("group_id", document.getGroupId())
 //								.put("source_db", "MongoDB");
-						return (Content) TextSegment.from(content, new Metadata());
+						return Content.from(content);
 					})
 					.collect(Collectors.toList());
 

@@ -98,6 +98,7 @@ public class ChatController {
 	@PostMapping("/readFile")
 	public void readDocumentFromStream(HttpServletRequest request, @RequestParam("file") MultipartFile multiFile) {
 		try {
+
 			// 获取文件名
 			String fileName = multiFile.getOriginalFilename();
 			// 获取文件后缀

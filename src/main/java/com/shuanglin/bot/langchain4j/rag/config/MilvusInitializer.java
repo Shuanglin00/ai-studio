@@ -87,7 +87,6 @@ public class MilvusInitializer implements ApplicationRunner {
 						.fieldName("memoryId")
 						.dataType(Int64)
 						.isPrimaryKey(true)
-						.autoID(true)
 						.build()
 				);
 

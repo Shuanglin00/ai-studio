@@ -42,11 +42,6 @@ public class DocumentInitializer {
 	@Value("${spring.data.milvus.defaultCollectionName}")
 	private String defaultCollectionName; // 默认集合名
 
-	// 这些值应该从更灵活的来源获取，例如作为方法参数或通过Spring Security上下文
-	// 这里暂时设为常量，但在实际应用中应避免硬编码
-	private static final String DEFAULT_USER_ID = "default_user";
-	private static final String DEFAULT_GROUP_ID = "default_group";
-
 	@Resource
 	MilvusClientV2 milvusClientV2;
 
@@ -76,11 +71,11 @@ public class DocumentInitializer {
 	 * @param str 要处理的文档字符串。
 	 */
 	private void readDocumentFromStr(HttpServletRequest request,String str) {
-		String userId = request.getAttribute("userId").toString();
-		String groupId = request.getAttribute("groupId").toString();
-		String memoryId1 = request.getAttribute("memoryId").toString();
+		String userId = "002";
+		String groupId = "002";
 		Document document = Document.from(str);
 		// 使用递归分割器，分块大小 300，重叠 0
+		log.info("开始分割文档内容...");
 		DocumentSplitter recursive = DocumentSplitters.recursive(300, 0);
 
 		// 将文档分割成 TextSegment，并为每个段落生成唯一的雪花ID作为其键
@@ -89,7 +84,7 @@ public class DocumentInitializer {
 						item -> IdUtil.getSnowflake().nextIdStr(), // keyMapper: 生成雪花ID作为键
 						item -> item // valueMapper: 将当前 TextSegment 作为值
 				));
-
+		log.info("文档分割完成，共生成 {} 个段落。", segmentMap.size());
 		if (segmentMap.isEmpty()) {
 			log.warn("文档分割后未产生任何文本段落。");
 			return;
@@ -97,7 +92,7 @@ public class DocumentInitializer {
 
 		List<JsonObject> milvusInsertData = new ArrayList<>();
 		List<DBMessageDTO> mongoUpsertData = new ArrayList<>();
-
+		log.info("生成嵌入向量并准备插入数据...");
 		segmentMap.forEach((memoryId, textSegment) -> { // 将 key 重命名为 segmentId 更明确
 			// 1. 生成嵌入向量
 			log.debug("为段落 '{}' 生成嵌入向量...", textSegment.text());
@@ -107,8 +102,8 @@ public class DocumentInitializer {
 			// 确保 EmbeddingEntity 有一个用于Milvus主键的字段，例如 'id'，并将其设置为 segmentId
 			// 假设 EmbeddingEntity.builder().id(segmentId) 或 .memoryId(segmentId) 是 Milvus 的主键
 			JsonObject milvusObject = new Gson().toJsonTree(EmbeddingEntity.builder()
-					.userId(DEFAULT_USER_ID)
-					.groupId(DEFAULT_GROUP_ID)
+					.userId(userId)
+					.groupId(groupId)
 					.embeddings(vector)
 					.memoryId(memoryId) // memoryId 应该与 segmentId 保持一致，用于MongoDB关联
 					.build()).getAsJsonObject();
