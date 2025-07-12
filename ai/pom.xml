@@ -9,26 +9,12 @@
         <version>1.0-catBot</version>
     </parent>
 
-    <artifactId>bot</artifactId>
+    <artifactId>ai</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-aop -->
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-aop -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
-            <version>3.4.5</version>
-        </dependency>
-        <dependency>
-            <groupId>com.shuanglin</groupId>
-            <artifactId>ai</artifactId>
-            <version>1.0-catBot</version>
-        </dependency>
-    </dependencies>
 
 </project>

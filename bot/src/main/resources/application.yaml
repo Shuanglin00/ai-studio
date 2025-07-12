@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bot
+  data:
+    #    redis:
+    #      database: 1
+    #      host:
+    #    mongodb:
+    #      uri: mongodb://:27017/chatDB
+    redis:
+      database: 1
+      host: 192.168.31.105
+    mongodb:
+      host: 192.168.31.105
+      port: 27017
+      database: chatDB
+    milvus:
+      url: http://192.168.31.105:19530
+      host: 192.168.31.105
+      port: 19530
+      defaultDatabaseName: chatEmbeddingDB2
+      defaultCollectionName: rag_embedding_collection
+  servlet:
+    multipart:
+      max-file-size: 20MB
+langchain4j:
+  models:
+    gemini:
+      api-model:
+        api-key: AIzaSyDf8AumGRKxpZwWGVTYsr3hlxeXZPQ9quQ
+        model-name: gemini-2.0-flash
+        temperature: 0.7
+      embedding-model:
+        projectId: tensile-yen-464506-a5
+        location: us-central1
+        modelName: gemini-1.5-flash
+    qwen:
+      embedding-model:
+        api-key: sk-ef837a5f684c4ed087802c948857df5f
+        location: us-central1
+        modelName: text-embedding-v2
