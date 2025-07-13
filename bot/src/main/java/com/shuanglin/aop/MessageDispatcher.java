@@ -34,16 +34,13 @@ public class MessageDispatcher {
 
 		for (Object beanInstance : beans.values()) {
 			for (Method method : beanInstance.getClass().getMethods()) {
-				// 校验方法签名，例如必须是公有方法，只有一个参数等，这里省略以保持简洁
 				if (method.isAnnotationPresent(PrivateMessageHandler.class)) {
-					// key可以是注解本身，也可以是约定的字符串
 					handlerMap.put("private", new MethodHandler(beanInstance, method));
 				} else if (method.isAnnotationPresent(GroupMessageHandler.class)) {
 					handlerMap.put("group", new MethodHandler(beanInstance, method));
 				}
 			}
 		}
-		System.out.println("Message handlers initialized: " + handlerMap);
 	}
 
 	/**

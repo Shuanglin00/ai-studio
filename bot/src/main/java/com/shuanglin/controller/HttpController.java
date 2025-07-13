@@ -96,7 +96,7 @@ public class HttpController {
 			noticeType = jsonObject.get("notice_type").toString().replace("\"", "");
 		}
 
-		int i = new Random().nextInt(17) + 1;
+		int i = new Random().nextInt(69) + 1;
 		String images = encodeImageToBase64("C:\\project\\ai-studio\\bot\\src\\main\\resources\\pigs" + File.separator + i + ".jpg", true, true);
 
 		if (noticeType.equalsIgnoreCase("notify") || text.equals("渚")) {
@@ -186,4 +186,5 @@ public class HttpController {
 		}
 		return "";
 	}
+
 }
