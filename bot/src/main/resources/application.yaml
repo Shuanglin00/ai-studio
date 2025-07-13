@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: bot
+  main:
+    allow-circular-references: true
   data:
     #    redis:
     #      database: 1

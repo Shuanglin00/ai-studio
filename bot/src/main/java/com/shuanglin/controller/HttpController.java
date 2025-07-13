@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.shuanglin.aop.RawMessageRouter;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import io.github.admin4j.http.HttpRequest;
 import io.github.admin4j.http.util.HttpJsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttp;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +37,8 @@ public class HttpController {
 	GeminiAssistant assistant;
 	@Resource
 	DocumentInitializer documentInitializer;
+	@Autowired
+	private RawMessageRouter router;
 
 	@PostMapping("")
 	public void post(HttpRequest request, @RequestBody String message) throws IOException {
@@ -82,37 +86,7 @@ public class HttpController {
 		} catch (Exception e) {
 			log.info(e.getMessage());
 		}
-		try {
-		} catch (Exception e) {
-			log.info(e.getMessage());
-		}
-
-		String text = "";
-		String noticeType = "";
-		if (jsonObject.get("message") != null) {
-			text = jsonObject.get("message").toString().replace("\"", "");
-		}
-		if (jsonObject.get("notice_type") != null) {
-			noticeType = jsonObject.get("notice_type").toString().replace("\"", "");
-		}
-
-		int i = new Random().nextInt(69) + 1;
-		String images = encodeImageToBase64("C:\\project\\ai-studio\\bot\\src\\main\\resources\\pigs" + File.separator + i + ".jpg", true, true);
-
-		if (noticeType.equalsIgnoreCase("notify") || text.equals("渚")) {
-			groupId =jsonObject.get("group_id").getAsString();
-			JsonObject data1 = new JsonObject();
-			data1.addProperty("file", images);
-			JsonArray messages = new JsonArray();
-			JsonObject jsonObject1 = new JsonObject();
-			jsonObject1.addProperty("type", "image");
-			jsonObject1.add("data", data1);
-			messages.add(jsonObject1);
-			JsonObject body = new JsonObject();
-			body.add("message", messages);
-			body.addProperty("group_id", groupId);
-			HttpJsonUtil.post("http://127.0.0.1:3000/send_group_msg", body.toString());
-		}
+		router.route(message);
 	}
 
 	/**

@@ -9,6 +9,8 @@ import com.shuanglin.aop.vo.Segment.data.ShareData;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+
 import java.util.function.Consumer;
 
 /**
@@ -29,11 +31,24 @@ import java.util.function.Consumer;
  *
  * @see Builder
  */
-public final class GroupMessage {
+@Getter
+public final class GroupMessage extends BaseMessage{
 
+	/**
+	 * -- GETTER --
+	 *  获取此消息的目标群组ID。
+	 *
+	 * @return 群组ID
+	 */
 	@JsonProperty("group_id")
 	private final Long groupId;
 
+	/**
+	 * -- GETTER --
+	 *  获取此消息的消息链。
+	 *
+	 * @return 一个由消息段组成的不可修改的列表
+	 */
 	@JsonProperty("message")
 	private final List<AbstractMessageSegment> messageChain;
 
@@ -42,25 +57,10 @@ public final class GroupMessage {
 	 * @param builder 用于构建此对象的建造者
 	 */
 	private GroupMessage(Builder builder) {
+		super(builder);
 		this.groupId = builder.groupId;
 		// 创建一个不可修改的列表副本，确保 GroupMessage 实例的不可变性
 		this.messageChain = List.copyOf(builder.messageChain);
-	}
-
-	/**
-	 * 获取此消息的目标群组ID。
-	 * @return 群组ID
-	 */
-	public Long getGroupId() {
-		return groupId;
-	}
-
-	/**
-	 * 获取此消息的消息链。
-	 * @return 一个由消息段组成的不可修改的列表
-	 */
-	public List<AbstractMessageSegment> getMessageChain() {
-		return messageChain;
 	}
 
 	/**
@@ -74,7 +74,7 @@ public final class GroupMessage {
 	/**
 	 * {@link GroupMessage} 的建造者类，用于以链式调用的方式构建复杂消息。
 	 */
-	public static final class Builder {
+	public static final class Builder extends BaseMessage.Builder<PrivateMessage.Builder> {
 
 		private Long groupId;
 		private final List<AbstractMessageSegment> messageChain = new ArrayList<>();
