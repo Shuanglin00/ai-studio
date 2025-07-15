@@ -2,7 +2,6 @@ package com.shuanglin.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.shuanglin.aop.RawMessageRouter;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
@@ -10,7 +9,6 @@ import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import io.github.admin4j.http.HttpRequest;
 import io.github.admin4j.http.util.HttpJsonUtil;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,14 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.Random;
-
-import static ai.djl.repository.FilenameUtils.getFileExtension;
 
 @RestController
 @RequestMapping("/bot")

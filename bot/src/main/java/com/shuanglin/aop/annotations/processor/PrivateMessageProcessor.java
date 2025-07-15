@@ -1,12 +1,9 @@
 package com.shuanglin.aop.annotations.processor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.shuanglin.aop.BusinessLogicDispatcher;
-import com.shuanglin.aop.vo.GroupMessage;
-import com.shuanglin.aop.vo.PrivateMessage;
 import com.shuanglin.event.GroupEventMessage;
-import com.shuanglin.event.PrivateEventMessage;
+import com.shuanglin.aop.event.PrivateEventMessage;
 import org.springframework.stereotype.Component;
 
 @Component

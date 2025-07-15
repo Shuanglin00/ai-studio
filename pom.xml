@@ -9,8 +9,8 @@
     <version>1.0-catBot</version>
     <packaging>pom</packaging>
     <modules>
-        <module>bot</module>
         <module>ai</module>
+        <module>bot</module>
     </modules>
 
     <properties>

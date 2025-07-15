@@ -33,7 +33,7 @@ public class ChatController {
 	@GetMapping("/ask")
 	public String ask(HttpServletRequest request,
 	                  @RequestParam(value = "memoryId", required = false) String memoryId,
-	                  @RequestParam(value = "role", required = false, defaultValue = "智能问答助手") String role,
+	                  @RequestParam(value = "model", required = false) String role,
 	                  @RequestParam(value = "userId", required = false) String userId,
 	                  @RequestParam(value = "question") String question){
 		// 日志入口

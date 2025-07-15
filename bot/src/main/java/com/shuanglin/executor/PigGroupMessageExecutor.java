@@ -1,6 +1,7 @@
 package com.shuanglin.executor;
 
 import com.shuanglin.aop.annotations.handler.GroupMessageHandler;
+import com.shuanglin.aop.event.GroupMessageEvent;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,7 +11,7 @@ public class PigGroupMessageExecutor {
 	 {"self_id":2784152733,"user_id":1751649231,"time":1752415645,"message_id":375834917,"message_seq":22624,"message_type":"group","sender":{"user_id":1751649231,"nickname":"双零","card":"","role":"owner","title":""},"raw_message":"渚","font":14,"sub_type":"normal","message":"渚","message_format":"string","post_type":"message","group_id":345693826}
 	 */
 	@GroupMessageHandler
-	public void pigGroupMessage(String group, String message) {
+	public void pigGroupMessage(GroupMessageEvent group) {
 		String text = "";
 		String noticeType = "";
 		System.out.println("group = " + group);
