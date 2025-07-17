@@ -1,5 +1,7 @@
 package com.shuanglin.framework.aop;
+
 import com.shuanglin.framework.annotation.GroupMessageHandler;
+import com.shuanglin.framework.bus.event.GroupMessageEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -28,19 +30,15 @@ public class MessageHandlerAspect {
 	public Object handleMessage(ProceedingJoinPoint pjp) throws Throwable {
 		MethodSignature signature = (MethodSignature) pjp.getSignature();
 		Method method = signature.getMethod();
+		boolean proceed = true;
 		GroupMessageHandler annotation = method.getAnnotation(GroupMessageHandler.class);
-
+		GroupMessageEvent group = (GroupMessageEvent) pjp.getArgs()[0]; // 假设 payload 是第一个参数
+		if (annotation.startWith() != null) {
+			proceed = group.getRawMessage().toString().startsWith(annotation.startWith());
+		}
 		String condition = annotation.condition();
-		Object payload = pjp.getArgs()[0]; // 假设 payload 是第一个参数
 
-		// 创建 SpEL 上下文并设置根对象为 payload
-		EvaluationContext context = new StandardEvaluationContext();
-		context.setVariable("payload", payload);
-
-		Expression expression = expressionParser.parseExpression(condition);
-		boolean shouldProceed = Boolean.TRUE.equals(expression.getValue(context, Boolean.class));
-
-		if (shouldProceed) {
+		if (proceed) {
 			log.info("AOP: Condition '{}' met. Proceeding with handler method: {}", condition, method.getName());
 			return pjp.proceed();
 		} else {

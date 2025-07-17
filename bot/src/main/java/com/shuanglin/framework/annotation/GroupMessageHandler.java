@@ -22,6 +22,9 @@ public @interface GroupMessageHandler {
 	 */
 	String condition() default "true";
 
+
+	String startWith() default "true";
+
 	/**
 	 * 定义监听器的行为。
 	 */
