@@ -1,8 +1,9 @@
 package com.shuanglin.executor;
 
-import com.shuanglin.aop.annotations.handler.GroupMessageHandler;
-import com.shuanglin.aop.event.GroupMessageEvent;
+import com.shuanglin.framework.annotation.GroupMessageHandler;
+import com.shuanglin.framework.bus.event.GroupMessageEvent;
 import org.springframework.stereotype.Component;
+
 
 @Component
 public class PigGroupMessageExecutor {
@@ -14,8 +15,8 @@ public class PigGroupMessageExecutor {
 	public void pigGroupMessage(GroupMessageEvent group) {
 		String text = "";
 		String noticeType = "";
-		System.out.println("group = " + group);
-		System.out.println("message = " + message);
+		System.out.println("group = " + group.getGroupId());
+		System.out.println("message = " + group.getMessage());
 //		if (jsonObject.get("message") != null) {
 //			text = jsonObject.get("message").toString().replace("\"", "");
 //		}

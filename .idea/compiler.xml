@@ -9,7 +9,11 @@
         <outputRelativeToContentRoot value="true" />
         <module name="ai" />
         <module name="bot" />
+        <module name="testBot" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="testBot" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
