@@ -34,7 +34,7 @@ public class MessageHandlerAspect {
 		GroupMessageHandler annotation = method.getAnnotation(GroupMessageHandler.class);
 		GroupMessageEvent group = (GroupMessageEvent) pjp.getArgs()[0]; // 假设 payload 是第一个参数
 		if (annotation.startWith() != null) {
-			proceed = group.getRawMessage().toString().startsWith(annotation.startWith());
+			proceed = group.getRawMessage().startsWith(annotation.startWith());
 		}
 		String condition = annotation.condition();
 

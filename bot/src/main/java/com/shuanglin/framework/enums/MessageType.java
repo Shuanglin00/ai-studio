@@ -26,6 +26,7 @@ public class MessageType {
 		 */
 		friend("friend"),
 		group("group"),
+		normal("normal"),
 		other("other");
 		String value;
 	}
