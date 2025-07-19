@@ -1,5 +1,6 @@
 package com.shuanglin.framework.bus;
 
+import com.google.gson.JsonObject;
 import com.shuanglin.framework.bus.event.Event;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -14,14 +15,14 @@ public class MessageBus {
 
 	// 使用 Reactor Sinks 作为响应式流的源
 	// many().multicast() 允许多个订阅者
-	private final Sinks.Many<Event> sink = Sinks.many().multicast().onBackpressureBuffer();
+	private final Sinks.Many<JsonObject> sink = Sinks.many().multicast().onBackpressureBuffer();
 
 	/**
 	 * 向总线发布一条消息。
 	 *
 	 * @param message 要发布的消息
 	 */
-	public void publish(Event event) {
+	public void publish(JsonObject event) {
 		sink.tryEmitNext(event);
 	}
 
@@ -30,7 +31,7 @@ public class MessageBus {
 	 *
 	 * @return 返回一个可订阅的消息流
 	 */
-	public Flux<Event> getBus() {
+	public Flux<JsonObject> getBus() {
 		return sink.asFlux();
 	}
 }

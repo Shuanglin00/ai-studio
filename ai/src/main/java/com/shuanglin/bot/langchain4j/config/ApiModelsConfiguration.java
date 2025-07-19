@@ -1,6 +1,7 @@
 package com.shuanglin.bot.langchain4j.config;
 
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
+import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiApiProperty;
@@ -8,6 +9,8 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,6 +28,51 @@ import java.util.List;
 @Configuration
 @EnableConfigurationProperties({GeminiProperties.class, QwenProperties.class})
 public class ApiModelsConfiguration {
+
+
+	@Bean
+	public OllamaChatModel chatLanguageModel() {
+		return OllamaChatModel.builder()
+				.baseUrl("http://localhost:11434")
+				.temperature(0.0) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.logRequests(true)
+				.logRequests(true)
+				.logResponses(true)
+				.modelName("gemma3:1b")
+				.build();
+	}
+	@Bean
+	public OllamaStreamingChatModel chatStreamingLanguageModel() {
+		return OllamaStreamingChatModel.builder()
+				.baseUrl("http://localhost:11434")
+				.temperature(0.0) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.logRequests(true)
+				.logRequests(true)
+				.logResponses(true)
+				.modelName("gemma3:1b")
+				.build();
+	}
+
+	@Bean
+	public OllamaAssistant ollamaAssistant(OllamaChatModel ollamaChatModel,
+										   OllamaStreamingChatModel chatStreamingLanguageModel,
+										   RedisMemoryStore redisMemoryStore,
+										   ContentRetriever dbContentRetriever
+//	                                       RetrievalAugmentor retrievalAugmentor
+
+	) {
+
+		return AiServices.builder(OllamaAssistant.class)
+				.chatModel(ollamaChatModel)
+				.streamingChatModel(chatStreamingLanguageModel)
+				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
+						.id(memoryId)
+						.maxMessages(10)
+						.chatMemoryStore(redisMemoryStore)
+						.build())
+				.contentRetriever(dbContentRetriever)
+				.build();
+	}
 
 	@Bean
 	GoogleAiGeminiChatModel googleAiGeminiChatModel(GeminiProperties geminiProperties,List<ChatModelListener> chatModelListenerList) {

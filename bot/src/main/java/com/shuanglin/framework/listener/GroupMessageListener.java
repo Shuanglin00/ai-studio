@@ -1,5 +1,6 @@
 package com.shuanglin.framework.listener;
 
+import com.google.gson.Gson;
 import com.shuanglin.framework.bus.MessageBus;
 import com.shuanglin.framework.bus.event.GroupMessageEvent;
 import com.shuanglin.framework.registry.MethodInvoker;
@@ -25,12 +26,12 @@ public class GroupMessageListener {
 		log.info("GroupMessageListener is subscribing to the message bus for 'group' type messages.");
 		messageBus.getBus()
 				// 1. 过滤出自己关心的消息类型
-				.filter(event -> event instanceof GroupMessageEvent)
+				.filter(event -> event.get("post_type").getAsString().equals("message") && event.get("message_type").getAsString().equals("group"))
 				// 2. 在独立的线程池中异步处理，避免阻塞总线
 				.publishOn(Schedulers.boundedElastic())
 				.doOnNext(event -> {
 					// 3. 处理消息
-					processMessage((GroupMessageEvent) event);
+					processMessage(new Gson().fromJson(event, GroupMessageEvent.class));
 				})
 				.subscribe(
 						null, // 成功处理时无需额外操作

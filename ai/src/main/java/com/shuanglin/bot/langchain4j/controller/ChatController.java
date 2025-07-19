@@ -2,6 +2,7 @@ package com.shuanglin.bot.langchain4j.controller;
 
 import com.google.gson.Gson;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
+import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import dev.langchain4j.service.TokenStream;
 import io.github.admin4j.http.HttpRequest;
@@ -27,6 +28,9 @@ public class ChatController {
 	@Autowired
 	private GeminiAssistant geminiAssistant;
 
+	@Autowired
+	private OllamaAssistant ollamaAssistant;
+
 	@Resource
 	private DocumentInitializer documentInitializer;
 
@@ -39,7 +43,7 @@ public class ChatController {
 		// 日志入口
 		request.setAttribute("memoryId", memoryId);
 		request.setAttribute("userId", userId);
-		String answer= geminiAssistant.chat(memoryId,role,userId, question);
+		String answer= ollamaAssistant.chat(memoryId,role,userId, question);
 		return answer;
 	}
 

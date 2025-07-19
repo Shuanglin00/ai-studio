@@ -1,6 +1,7 @@
 package com.shuanglin.framework.aop;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.shuanglin.framework.annotation.PublishBus;
 import com.shuanglin.framework.bus.MessageBus;
 import com.shuanglin.framework.bus.event.Event;
@@ -31,16 +32,12 @@ public class PublishToBusAspect {
 	public Object afterReturning(ProceedingJoinPoint joinPoint, PublishBus publishBus) throws Throwable {
 		if (joinPoint.getArgs() != null) {
 			String messageType = publishBus.type(); // 获取注解中定义的消息类型
-			Event event = null;
 			try {
-				Object arg = joinPoint.getArgs()[0];
-				event = new Gson().fromJson(arg.toString(), GroupMessageEvent.class);
+				String arg = (String)joinPoint.getArgs()[0];
+				messageBus.publish(new Gson().fromJson(arg, JsonObject.class));
 			} catch (Exception e) {
 				log.error("event {}",joinPoint.getArgs()[0]);
 				log.error("AOP: Error while processing return value for message type '{}': {}", messageType, e.getMessage());
-			}
-			if (event != null) {
-				messageBus.publish(event);
 			}
 		} else {
 			log.warn("AOP: Method returned null, no message published.");
