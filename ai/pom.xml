@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.shuanglin</groupId>
         <artifactId>catBot</artifactId>
-        <version>1.0-catBot</version>
+        <version>1.0</version>
     </parent>
 
     <artifactId>ai</artifactId>

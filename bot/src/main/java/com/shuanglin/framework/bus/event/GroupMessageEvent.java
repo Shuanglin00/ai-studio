@@ -13,7 +13,7 @@ import java.io.Serializable;
 @ToString(callSuper = true)
 public class GroupMessageEvent extends MessageEvent implements Serializable {
 	@SerializedName("group_id")
-	Long groupId;
+	String groupId;
 
 	@SerializedName("anonymous")
 	Anonymous anonymous;

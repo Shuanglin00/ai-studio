@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Sender {
-	Long userId;     // 发送者 QQ 号
+	String userId;     // 发送者 QQ 号
 	String nickname;   // 昵称
 	String card;       // 群名片／备注
 	String sex;        // 性别，male 或 female 或 unknown
