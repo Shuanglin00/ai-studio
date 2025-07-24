@@ -1,5 +1,6 @@
 package com.shuanglin.bot.langchain4j.assistant;
 
+import com.google.gson.JsonObject;
 import dev.langchain4j.service.*;
 import reactor.core.publisher.Flux;
 /**
@@ -18,11 +19,18 @@ public interface GeminiAssistant  {
 	 * @return
 	 */
 	@UserMessage(value = "{{question}}")
-	@SystemMessage(value = "使用中文回答,限制返回字数小于200字")
-	String chat(
+	@SystemMessage(value = "使用中文回答,限制返回字数小于200字;")
+
+	String memoryChat(
 			@MemoryId String memoryId,
-			@V("role") String role,
+			@V("params") JsonObject params,
 			@UserName String userid,
+			@V("question") String question);
+	@UserMessage(value = "{{question}}")
+
+	@SystemMessage(value = "{{params}}")
+	String groupChat(
+			@V("params") JsonObject params,
 			@V("question") String question);
 
 	/**

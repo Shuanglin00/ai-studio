@@ -34,8 +34,14 @@ public class GroupInfoUtil {
 
 	private ModelsRepository modelsRepository;
 
+	/**
+	 * 检查本群是否开启模型
+	 *
+	 * @param groupMessageEvent 组消息事件
+	 * @param selectModel       选择型号
+	 * @return boolean
+	 */
 	public boolean checkModelPermission(GroupMessageEvent groupMessageEvent, String selectModel) {
-		SenderInfo senderInfo = getGroupSenderInfo(groupMessageEvent);
 		GroupInfo groupInfo = getGroupInfo(groupMessageEvent);
 		List<String> groupActiveModels = groupInfo.getModelInfo().getActiveModels();
 		if (groupActiveModels.contains(selectModel)) {

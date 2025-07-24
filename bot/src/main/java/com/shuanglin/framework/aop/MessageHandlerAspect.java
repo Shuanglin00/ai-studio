@@ -8,13 +8,12 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Aspect
@@ -33,8 +32,11 @@ public class MessageHandlerAspect {
 		boolean proceed = true;
 		GroupMessageHandler annotation = method.getAnnotation(GroupMessageHandler.class);
 		GroupMessageEvent group = (GroupMessageEvent) pjp.getArgs()[0]; // 假设 payload 是第一个参数
-		if (annotation.startWith() != null) {
-			proceed = group.getRawMessage().startsWith(annotation.startWith());
+		String command = annotation.startWith();
+		List<String> params = new ArrayList<>(List.of(group.getRawMessage().replace(command, "").split(" ")));
+		group.setMessage(params.toString());
+		if (command != null) {
+			proceed = group.getRawMessage().startsWith(command);
 		}
 		String condition = annotation.condition();
 

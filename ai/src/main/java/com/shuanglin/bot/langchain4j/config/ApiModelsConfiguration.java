@@ -5,6 +5,7 @@ import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiApiProperty;
+import com.shuanglin.bot.langchain4j.rag.config.NonMemoryRetriever;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
@@ -56,8 +57,8 @@ public class ApiModelsConfiguration {
 	@Bean
 	public OllamaAssistant ollamaAssistant(OllamaChatModel ollamaChatModel,
 										   OllamaStreamingChatModel chatStreamingLanguageModel,
-										   RedisMemoryStore redisMemoryStore,
-										   ContentRetriever dbContentRetriever
+										   NonMemoryStore nonMemoryStore,
+										   NonMemoryRetriever nonMemoryRetriever
 //	                                       RetrievalAugmentor retrievalAugmentor
 
 	) {
@@ -65,12 +66,12 @@ public class ApiModelsConfiguration {
 		return AiServices.builder(OllamaAssistant.class)
 				.chatModel(ollamaChatModel)
 				.streamingChatModel(chatStreamingLanguageModel)
-				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
-						.id(memoryId)
+				.chatMemoryProvider(modelId -> MessageWindowChatMemory.builder()
+						.id(modelId)
 						.maxMessages(10)
-						.chatMemoryStore(redisMemoryStore)
+						.chatMemoryStore(nonMemoryStore)
 						.build())
-				.contentRetriever(dbContentRetriever)
+				.contentRetriever(nonMemoryRetriever)
 				.build();
 	}
 
