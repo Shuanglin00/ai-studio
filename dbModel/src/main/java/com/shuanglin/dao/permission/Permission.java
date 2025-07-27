@@ -1,4 +1,4 @@
-package com.shuanglin.dbModel.permission;
+package com.shuanglin.dao.permission;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

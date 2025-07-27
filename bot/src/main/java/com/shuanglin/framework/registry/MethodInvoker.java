@@ -12,6 +12,7 @@ public class MethodInvoker {
 			info.method().invoke(info.bean(), payload);
 		} catch (Exception e) {
 			log.error("Failed to invoke message handler method: {}", info.method().getName(), e);
+			log.info(e.getMessage());
 		}
 	}
 }

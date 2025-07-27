@@ -5,6 +5,7 @@ import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import com.shuanglin.bot.langchain4j.config.vo.gemini.GeminiApiProperty;
+import com.shuanglin.bot.langchain4j.rag.config.DBContentRetriever;
 import com.shuanglin.bot.langchain4j.rag.config.NonMemoryRetriever;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -12,8 +13,11 @@ import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.injector.ContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -102,9 +106,8 @@ public class ApiModelsConfiguration {
 	@Bean
 	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel localLLMModel,
 										   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
-										   RedisMemoryStore redisMemoryStore,
-										   ContentRetriever dbContentRetriever
-//	                                       RetrievalAugmentor retrievalAugmentor
+										   NonMemoryStore nonMemoryStore,
+										   RetrievalAugmentor chatRetrievalAugmentor
 
 	) {
 
@@ -114,10 +117,9 @@ public class ApiModelsConfiguration {
 				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
 						.id(memoryId)
 						.maxMessages(10)
-						.chatMemoryStore(redisMemoryStore)
+						.chatMemoryStore(nonMemoryStore)
 						.build())
-				.contentRetriever(dbContentRetriever)
-//				.retrievalAugmentor(retrievalAugmentor)
+				.retrievalAugmentor(chatRetrievalAugmentor)
 				.build();
 	}
 

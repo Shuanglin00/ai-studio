@@ -26,11 +26,11 @@ public interface GeminiAssistant  {
 			@V("params") JsonObject params,
 			@UserName String userid,
 			@V("question") String question);
-	@UserMessage(value = "{{question}}")
 
-	@SystemMessage(value = "{{params}}")
+
+	@UserMessage(value = "{{question}}")
 	String groupChat(
-			@V("params") JsonObject params,
+			@MemoryId JsonObject senderInfo,
 			@V("question") String question);
 
 	/**

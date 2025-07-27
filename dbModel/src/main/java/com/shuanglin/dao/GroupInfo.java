@@ -1,6 +1,8 @@
-package com.shuanglin.dbModel.info;
+package com.shuanglin.dao;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.Collections;
 

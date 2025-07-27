@@ -4,9 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.shuanglin.bot.db.KnowledgeEntity;
 import com.shuanglin.bot.db.KnowledgeEntityRepository;
+import com.shuanglin.dao.Model;
+import com.shuanglin.dao.ModelsRepository;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -26,9 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component("NonMemoryRetriever")
 @Slf4j
 @RequiredArgsConstructor
+@Component("NonMemoryRetriever")
 public class NonMemoryRetriever implements ContentRetriever {
 
 	private final MilvusClientV2 milvusClient;
@@ -36,6 +39,8 @@ public class NonMemoryRetriever implements ContentRetriever {
 	private final EmbeddingModel embeddingModel;
 
 	private final KnowledgeEntityRepository knowledgeRepository;
+
+	private final ModelsRepository modelsRepository;
 
 	private final Gson gson;
 
@@ -63,9 +68,13 @@ public class NonMemoryRetriever implements ContentRetriever {
 	public List<Content> retrieve(Query query) {
 		// 检查query是否包含SysMessage
 		JsonObject params = new JsonObject();
-		if (query.metadata().chatMessage() instanceof SystemMessage) {
-			params = gson.fromJson(((SystemMessage) query.metadata().chatMessage()).text(), JsonObject.class);
-		}
+		params = gson.toJsonTree(query.metadata().chatMemoryId()).getAsJsonObject();
+		JsonObject senderInfo = gson.toJsonTree(params.get("senderInfo")).getAsJsonObject();
+		JsonObject group = gson.toJsonTree(params.get("groupMessageEvent")).getAsJsonObject();
+		String groupId = group.get("group_id").getAsString();
+		String userId = group.get("user_id").getAsString();
+		String modelId = senderInfo.get("modelInfo").getAsJsonObject().get("useModel").getAsString();
+		Model model = modelsRepository.getModelById(modelId);
 		log.info("==================== [START] Retrieval Process ====================");
 		// 消息 自动凭借 存入数据库需要根据相同memoryId覆盖 多个memory
 		try {
@@ -82,9 +91,9 @@ public class NonMemoryRetriever implements ContentRetriever {
 			FloatVec floatVec = new FloatVec(queryEmbedding.vectorAsList());
 			int maxResults = 5;
 			Map<String, Object> searchParams = new HashMap<>();
-			searchParams.put("groupId", params.get("groupId").getAsString());
-			searchParams.put("userId", params.get("userId").getAsString());
-			searchParams.put("modelId", params.get("modelId").getAsString());
+			searchParams.put("groupId", groupId);
+			searchParams.put("userId", userId);
+			searchParams.put("modelId", modelId);
 			SearchReq searchRequest = SearchReq.builder()
 					.databaseName(defaultDatabaseName)
 					.collectionName(defaultCollectionName)
@@ -119,7 +128,7 @@ public class NonMemoryRetriever implements ContentRetriever {
 
 			// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
 
-			List<KnowledgeEntity> knowledge = knowledgeRepository.findKnowledge(params.get("groupId").getAsString(), params.get("userId").getAsString(), params.get("modelId").getAsString());
+			List<KnowledgeEntity> knowledge = knowledgeRepository.findByGroupIdAndUserIdAndModelId(groupId, userId, modelId);
 			log.info("[Step 4] MongoDB query completed. Found {} full documents.", knowledge.size());
 
 			if (knowledge.isEmpty()) {
@@ -141,9 +150,6 @@ public class NonMemoryRetriever implements ContentRetriever {
 			log.info("[Step 5] Mapping complete. Returning {} Content objects.", finalContentList.size());
 			log.info("==================== [END] Retrieval Process (Success) ====================");
 
-			// TODO 构造问题模板
-
-//			promptTemplate.apply(finalContentList);
 			return finalContentList;
 		} catch (Exception e) {
 			log.error("An unexpected error occurred during the retrieval process.", e);

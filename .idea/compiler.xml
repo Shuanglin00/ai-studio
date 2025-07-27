@@ -8,12 +8,13 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="ai" />
+        <module name="dbModel" />
         <module name="testBot" />
         <module name="bot" />
-        <module name="db" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="db" target="17" />
       <module name="testBot" target="17" />
     </bytecodeTargetLevel>
   </component>

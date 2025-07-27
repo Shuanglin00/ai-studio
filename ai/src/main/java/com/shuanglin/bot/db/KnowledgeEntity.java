@@ -1,12 +1,16 @@
 package com.shuanglin.bot.db;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("model_knowledge")
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class KnowledgeEntity {
 
 	private String id;

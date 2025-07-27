@@ -23,12 +23,14 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Configuration
+@Component("RedisMemoryStore")
 public class RedisMemoryStore implements ChatMemoryStore {
 
 	@Autowired

@@ -31,27 +31,18 @@ public class PigGroupMessageExecutor {
 	public void pigGroupMessage(GroupMessageEvent group) throws IOException {
 		String text = "";
 		group.setMessage(group.getMessage().replace("#pig", ""));
-		System.out.println("group = " + group.getGroupId());
-		System.out.println("message = " + group.getMessage());
-		if (group.getMessage() != null) {
-			text = group.getMessage().replace("\"", "");
-		}
-
 		String images = getRandomImageAsBase64("C:\\project\\ai-studio\\bot\\src\\main\\resources\\pigs");
-
-		if (text.equals("渚")) {
-			JsonObject data1 = new JsonObject();
-			data1.addProperty("file", images);
-			JsonArray messages = new JsonArray();
-			JsonObject jsonObject1 = new JsonObject();
-			jsonObject1.addProperty("type", "image");
-			jsonObject1.add("data", data1);
-			messages.add(jsonObject1);
-			JsonObject body = new JsonObject();
-			body.add("message", messages);
-			body.addProperty("group_id", group.getGroupId());
-			HttpJsonUtil.post("http://127.0.0.1:3000/send_group_msg", body.toString());
-		}
+		JsonObject data1 = new JsonObject();
+		data1.addProperty("file", images);
+		JsonArray messages = new JsonArray();
+		JsonObject jsonObject1 = new JsonObject();
+		jsonObject1.addProperty("type", "image");
+		jsonObject1.add("data", data1);
+		messages.add(jsonObject1);
+		JsonObject body = new JsonObject();
+		body.add("message", messages);
+		body.addProperty("group_id", group.getGroupId());
+		HttpJsonUtil.post("http://127.0.0.1:3000/send_group_msg", body.toString());
 	}
 
 	public void noticePig(GroupMessageEvent group) throws IOException {
@@ -113,7 +104,7 @@ public class PigGroupMessageExecutor {
 			// 读取文件所有字节
 			byte[] fileContent = Files.readAllBytes(randomImageFile.toPath());
 			// 使用Java内置的Base64编码器进行编码
-			return "base64://"+Base64.getEncoder().encodeToString(fileContent);
+			return "base64://" + Base64.getEncoder().encodeToString(fileContent);
 		} catch (IOException e) {
 			System.err.println("读取文件时出错: " + e.getMessage());
 			e.printStackTrace();

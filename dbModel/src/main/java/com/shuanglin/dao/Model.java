@@ -1,16 +1,11 @@
-package com.shuanglin.dbModel.models;
+package com.shuanglin.dao;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Document("model" )
 public class Model implements Serializable {
 
@@ -27,6 +22,5 @@ public class Model implements Serializable {
 	private String constraints; // 限制与要求
 
 	private String isActive;
-
 
 }

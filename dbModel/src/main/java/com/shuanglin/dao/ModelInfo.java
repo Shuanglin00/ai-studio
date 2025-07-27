@@ -1,13 +1,12 @@
-package com.shuanglin.dbModel.info;
+package com.shuanglin.dao;
 
-import com.shuanglin.dbModel.models.Model;
 import lombok.*;
 
 import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor()
+@AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class ModelInfo extends Model {

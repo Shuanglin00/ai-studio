@@ -27,6 +27,8 @@ public class MongoDBInitializer implements ApplicationRunner {
 	private static final String MODELS_COLLECTION = "models";
 	private static final String PERMISSIONS_COLLECTION = "groupModelPermissions";
 	private static final String SETTINGS_COLLECTION = "userGroupModelSettings";
+	// --- 新增：为 KnowledgeEntity 定义集合名称 ---
+	private static final String KNOWLEDGE_COLLECTION = "model_knowledge";
 
 	@Override
 	public void run(ApplicationArguments args) {
@@ -41,12 +43,48 @@ public class MongoDBInitializer implements ApplicationRunner {
 			// 初始化 'userGroupModelSettings' 集合
 			initializeUserGroupModelSettingsCollection();
 
+			// --- 新增：初始化 'model_knowledge' 集合 ---
+			initializeKnowledgeCollection();
+
 		} catch (Exception e) {
 			log.error("MongoDB 初始化失败！应用可能无法正常工作。", e);
 		} finally {
 			log.info("--- MongoDB 集合初始化检查完成 ---");
 		}
 	}
+
+	/**
+	 * --- 新增方法 ---
+	 * 初始化 `model_knowledge` 集合及其索引。
+	 * - 复合索引: (groupId, userId, modelId)
+	 * - 普通索引: lastChatTime
+	 */
+	private void initializeKnowledgeCollection() {
+		if (!mongoTemplate.collectionExists(KNOWLEDGE_COLLECTION)) {
+			mongoTemplate.createCollection(KNOWLEDGE_COLLECTION);
+			log.info("集合 '{}' 不存在，已成功创建。", KNOWLEDGE_COLLECTION);
+		}
+
+		log.info("为集合 '{}' 检查并创建索引...", KNOWLEDGE_COLLECTION);
+		MongoCollection<Document> collection = mongoTemplate.getCollection(KNOWLEDGE_COLLECTION);
+
+		// 创建复合索引，以极大地优化基于 groupId, userId 和 modelId 的查询
+		Document compoundIndexKeys = new Document("groupId", 1)
+				.append("userId", 1)
+				.append("modelId", 1);
+		collection.createIndex(compoundIndexKeys);
+		log.info(" -> 复合索引 on 'groupId', 'userId' & 'modelId' 已确保存在。");
+
+		// 为 lastChatTime 创建倒序索引，以便快速按时间排序，获取最新记录
+		// -1 表示倒序 (descending)
+		collection.createIndex(new Document("lastChatTime", -1));
+		log.info(" -> 倒序索引 on 'lastChatTime' 已确保存在。");
+
+		// （可选）如果经常按类型过滤，也可以为 'type' 字段创建索引
+		// collection.createIndex(new Document("type", 1));
+		// log.info(" -> 普通索引 on 'type' 已确保存在。");
+	}
+
 
 	/**
 	 * 初始化 `models` 集合及其索引。
