@@ -29,10 +29,7 @@ public interface OllamaAssistant {
 			""")
 	String groupChat(
 			@MemoryId JsonObject senderInfo,
-			@V("question") String question,
-			@V("instruction") String instruction,
-			@V("description") String description,
-			@V("role") String role
+			@V("question") String question
 	);
 
 	/**

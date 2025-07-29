@@ -40,7 +40,7 @@ public class AiExecutor {
 			return;
 		}
 		Model model = modelsRepository.getModelByModelName(senderInfo.getModelInfo().getUseModel());
-		String s = assistant.groupChat(gson.toJsonTree(ChatParam.builder().senderInfo(senderInfo).groupMessageEvent(group)).getAsJsonObject(), group.getMessage(),model.getInstruction(),"",model.getModelName());
+		String s = assistant.groupChat(gson.toJsonTree(ChatParam.builder().senderInfo(senderInfo).groupMessageEvent(group)).getAsJsonObject(), group.getMessage());
 		System.out.println("s = " + s);
 		JsonObject data1 = new JsonObject();
 		data1.addProperty("text", s);
