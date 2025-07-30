@@ -10,6 +10,7 @@
         <module name="ai" />
         <module name="dbModel" />
         <module name="testBot" />
+        <module name="common" />
         <module name="bot" />
       </profile>
     </annotationProcessing>
