@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.rag.embedding.model;
+package com.shuanglin.bot.langchain4j.config.rag.embedding.model;
 
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import com.shuanglin.bot.langchain4j.config.vo.base.EmbeddingModelProperties;

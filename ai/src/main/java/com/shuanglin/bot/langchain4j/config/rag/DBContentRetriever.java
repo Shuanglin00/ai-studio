@@ -1,16 +1,8 @@
-package com.shuanglin.bot.langchain4j.rag.config;
+package com.shuanglin.bot.langchain4j.config.rag;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.shuanglin.bot.db.KnowledgeEntity;
-import com.shuanglin.bot.db.KnowledgeEntityRepository;
-import com.shuanglin.dao.Model;
-import com.shuanglin.dao.ModelsRepository;
+import com.shuanglin.bot.config.DBMessageDTO;
 import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.input.Prompt;
-import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.Query;
@@ -18,33 +10,29 @@ import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
+@Component("DBContentRetriever")
 @Slf4j
-@RequiredArgsConstructor
-@Component("NonMemoryRetriever")
-public class NonMemoryRetriever implements ContentRetriever {
+public class DBContentRetriever implements ContentRetriever {
 
-	private final MilvusClientV2 milvusClient;
+	@Resource
+	private MilvusClientV2 milvusClient;
 
-	private final EmbeddingModel embeddingModel;
+	@Resource
+	private EmbeddingModel embeddingModel;
 
-	private final KnowledgeEntityRepository knowledgeRepository;
-
-	private final ModelsRepository modelsRepository;
-
-	private final Gson gson;
-
-	private final PromptTemplate promptTemplate;
+	@Resource
+	private MongoTemplate mongoTemplate;
 
 	@Value("${spring.data.milvus.defaultDatabaseName}")
 	private String defaultDatabaseName; // 默认数据库名
@@ -66,15 +54,6 @@ public class NonMemoryRetriever implements ContentRetriever {
 	 */
 	@Override
 	public List<Content> retrieve(Query query) {
-		// 检查query是否包含SysMessage
-		JsonObject params = new JsonObject();
-		params = gson.toJsonTree(query.metadata().chatMemoryId()).getAsJsonObject();
-		JsonObject senderInfo = gson.toJsonTree(params.get("senderInfo")).getAsJsonObject();
-		JsonObject group = gson.toJsonTree(params.get("groupMessageEvent")).getAsJsonObject();
-		String groupId = group.get("group_id").getAsString();
-		String userId = group.get("user_id").getAsString();
-		String modelId = senderInfo.get("modelInfo").getAsJsonObject().get("useModel").getAsString();
-		Model model = modelsRepository.getModelById(modelId);
 		log.info("==================== [START] Retrieval Process ====================");
 		// 消息 自动凭借 存入数据库需要根据相同memoryId覆盖 多个memory
 		try {
@@ -90,18 +69,12 @@ public class NonMemoryRetriever implements ContentRetriever {
 			// -------------------- 步骤 2: 在 Milvus/EmbeddingStore 中进行向量搜索 --------------------
 			FloatVec floatVec = new FloatVec(queryEmbedding.vectorAsList());
 			int maxResults = 5;
-			Map<String, Object> searchParams = new HashMap<>();
-			searchParams.put("groupId", groupId);
-			searchParams.put("userId", userId);
-			searchParams.put("modelId", modelId);
 			SearchReq searchRequest = SearchReq.builder()
 					.databaseName(defaultDatabaseName)
 					.collectionName(defaultCollectionName)
-					.filterTemplateValues(searchParams)
 					.data(Collections.singletonList(floatVec))
 					.topK(maxResults)
 					.build();
-
 			log.info("[Step 2] Executing vector search in EmbeddingStore with maxResults={}", maxResults);
 
 			SearchResp searchResult = milvusClient.search(searchRequest);
@@ -120,37 +93,50 @@ public class NonMemoryRetriever implements ContentRetriever {
 			}
 			System.out.println("searchResult.getSearchResults() = " + searchResult.getSearchResults());
 			// **【关键修正】** 从 EmbeddingMatch 中提取 ID 列表
-			List<String> messageIds = searchResult.getSearchResults().get(0).stream()
+			List<String> memoryIds = searchResult.getSearchResults().get(0).stream()
 					.map(match -> match.getId().toString()) // 假设 ID 是字符串类型
 					.collect(Collectors.toList());
-			log.info("[Step 3] Extracted memory IDs from search result: {}", messageIds);
+			log.info("[Step 3] Extracted memory IDs from search result: {}", memoryIds);
 
 
 			// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
+			// **【关键修正】** 使用 'in' 而不是 'is'
+			org.springframework.data.mongodb.core.query.Query mongoDbQuery =
+					new org.springframework.data.mongodb.core.query.Query(Criteria.where("memoryId").in(memoryIds)); // 假设你的主键字段是 _id
 
-			List<KnowledgeEntity> knowledge = knowledgeRepository.findByGroupIdAndUserIdAndModelId(groupId, userId, modelId);
-			log.info("[Step 4] MongoDB query completed. Found {} full documents.", knowledge.size());
+			log.info("[Step 4] Querying MongoDB with {} IDs.", memoryIds.size());
 
-			if (knowledge.isEmpty()) {
+			// 假设你的 DTO 类叫 DBMessageDTO，并且有 content 等字段
+			List<DBMessageDTO> dbMessages = mongoTemplate.find(mongoDbQuery, DBMessageDTO.class);
+			log.info("[Step 4] MongoDB query completed. Found {} full documents.", dbMessages.size());
+
+			if (dbMessages.isEmpty()) {
 				log.warn("[Step 4] MongoDB returned no documents for the given IDs. Check for data consistency issues.");
 				log.info("==================== [END] Retrieval Process (No Docs) ====================");
 				return List.of();
 			}
+			dbMessages.forEach(msg -> log.debug("  - Fetched from DB: ID='{}', Content='{}'", msg.getMemoryId(), msg.getContent()));
+
 
 			// -------------------- 步骤 5: 将数据库结果转换为 LangChain4j 的 Content 格式 --------------------
-			log.info("[Step 5] Mapping {} DB documents to LangChain4j Content objects.", knowledge.size());
-			List<Content> finalContentList = knowledge.stream()
+			log.info("[Step 5] Mapping {} DB documents to LangChain4j Content objects.", dbMessages.size());
+			List<Content> finalContentList = dbMessages.stream()
 					.map(document -> {
 						// 在这里，你可以从 document 构建非常丰富的元数据
 						String content = document.getContent();
+//						Metadata metadata = new Metadata()
+//								.put("memory_id", document.getMemoryId()) // 使用 DTO 的 getter 方法
+//								.put("user_id", document.getUserId())
+//								.put("group_id", document.getGroupId())
+//								.put("source_db", "MongoDB");
 						return Content.from(content);
 					})
 					.collect(Collectors.toList());
 
 			log.info("[Step 5] Mapping complete. Returning {} Content objects.", finalContentList.size());
 			log.info("==================== [END] Retrieval Process (Success) ====================");
-
 			return finalContentList;
+
 		} catch (Exception e) {
 			log.error("An unexpected error occurred during the retrieval process.", e);
 			log.info("==================== [END] Retrieval Process (Error) ====================");

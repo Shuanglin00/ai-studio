@@ -1,12 +1,9 @@
-package com.shuanglin.bot.langchain4j.config;
+package com.shuanglin.bot.langchain4j.config.store;
 
 import cn.hutool.core.util.StrUtil;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mongodb.client.result.UpdateResult;
 import com.shuanglin.bot.config.DBMessageDTO;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ChatMessageDeserializer;
 import dev.langchain4j.data.message.ChatMessageSerializer;
@@ -14,7 +11,6 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import io.milvus.v2.client.MilvusClientV2;
-import io.milvus.v2.service.vector.request.UpsertReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +22,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Configuration

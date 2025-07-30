@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.rag.embedding.vo;
+package com.shuanglin.bot.langchain4j.config.rag.embedding.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.rag.config;
+package com.shuanglin.bot.langchain4j.config;
 
 import io.milvus.param.Constant;
 import io.milvus.v2.client.MilvusClientV2;

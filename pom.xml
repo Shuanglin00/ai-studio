@@ -12,6 +12,7 @@
         <module>ai</module>
         <module>bot</module>
         <module>dbModel</module>
+        <module>common</module>
     </modules>
 
     <properties>

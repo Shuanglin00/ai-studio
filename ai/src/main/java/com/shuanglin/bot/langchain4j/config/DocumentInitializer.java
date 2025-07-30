@@ -4,7 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.shuanglin.bot.config.DBMessageDTO;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
+import com.shuanglin.bot.langchain4j.config.rag.embedding.vo.EmbeddingEntity;
 import com.shuanglin.bot.utils.FileReadUtil;
 import com.shuanglin.bot.utils.ProjectReaderUtil;
 import dev.langchain4j.data.segment.TextSegment;

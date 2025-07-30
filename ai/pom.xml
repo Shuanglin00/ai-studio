@@ -23,6 +23,11 @@
             <artifactId>dbModel</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.shuanglin</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+        </dependency>
         <!--        谷歌gemini 协议-->
         <dependency>
             <groupId>dev.langchain4j</groupId>

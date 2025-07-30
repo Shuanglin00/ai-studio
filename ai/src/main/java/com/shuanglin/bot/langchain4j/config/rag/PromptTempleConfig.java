@@ -1,19 +1,15 @@
-package com.shuanglin.bot.langchain4j.rag.config;
+package com.shuanglin.bot.langchain4j.config.rag;
 
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.aggregator.DefaultContentAggregator;
 import dev.langchain4j.rag.content.injector.ContentInjector;
-import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.router.DefaultQueryRouter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.Resource;
 
 @Configuration
 public class PromptTempleConfig {
@@ -44,7 +40,7 @@ public class PromptTempleConfig {
 	}
 
 	@Bean("chatRetrievalAugmentor")
-	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("NonMemoryRetriever") ContentRetriever NonMemoryRetriever,
+	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("filterQueryRetriever") ContentRetriever NonMemoryRetriever,
 													 ContentInjector chatContentInjector) {
 		return DefaultRetrievalAugmentor.builder()
 				.queryRouter(new DefaultQueryRouter(NonMemoryRetriever))

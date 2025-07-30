@@ -1,6 +1,5 @@
-package com.shuanglin.bot.langchain4j.rag.config;
+package com.shuanglin.bot.langchain4j.config.rag;
 
-import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
 import org.springframework.beans.factory.annotation.Value;
