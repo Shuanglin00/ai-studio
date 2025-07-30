@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.shuanglin.bot.langchain4j.config.store.DbQueryVO;
+import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
 import com.shuanglin.dao.Model;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -42,6 +43,8 @@ public class FilterQueryRetriever implements ContentRetriever {
 	private final MongoTemplate mongoTemplate;
 
 	private final Gson gson;
+
+	private final MilvusProperties milvusProperties;
 
 	@Value("${spring.data.milvus.defaultDatabaseName}")
 	private String defaultDatabaseName; // 默认数据库名
@@ -85,17 +88,14 @@ public class FilterQueryRetriever implements ContentRetriever {
 			log.info("[Step 1] Query text successfully converted to vector. Dimension: {}", queryEmbedding.vector().length);
 			// -------------------- 步骤 2: 在 Milvus 中进行向量搜索 --------------------
 			FloatVec floatVec = new FloatVec(queryEmbedding.vectorAsList());
-			int maxResults = 5;
 			SearchReq searchRequest = SearchReq.builder()
 					.databaseName(defaultDatabaseName)
 					.collectionName(defaultCollectionName)
 					.filterTemplateValues(gson.fromJson(queryParams, new TypeToken<Map<String, Object>>() {
 					}.getType()))
 					.data(Collections.singletonList(floatVec))
-					.topK(maxResults)
+					.topK(milvusProperties.getTopK())
 					.build();
-
-			log.info("[Step 2] Executing vector search in EmbeddingStore with maxResults={}", maxResults);
 
 			SearchResp searchResult = milvusClient.search(searchRequest);
 			log.info("[Step 2] Vector search completed. Found {} potential matches.", searchResult.getSearchResults().size());
