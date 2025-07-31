@@ -1,4 +1,5 @@
 package com.shuanglin.framework.registry;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -6,6 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MethodInvoker {
 
+	@SneakyThrows
 	public void invoke(MethodInfo info, Object payload) {
 		try {
 			// 调用 info.bean() 上的方法，确保 AOP 切面能拦截

@@ -41,7 +41,7 @@ public class PromptTempleConfig {
 
 	@Bean("chatRetrievalAugmentor")
 	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("filterQueryRetriever") ContentRetriever NonMemoryRetriever,
-													 ContentInjector chatContentInjector) {
+													 @Qualifier("chatContentInjector") ContentInjector chatContentInjector) {
 		return DefaultRetrievalAugmentor.builder()
 				.queryRouter(new DefaultQueryRouter(NonMemoryRetriever))
 				.contentAggregator(new DefaultContentAggregator())

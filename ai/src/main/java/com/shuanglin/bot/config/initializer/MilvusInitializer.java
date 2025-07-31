@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config;
+package com.shuanglin.bot.config.initializer;
 
 import io.milvus.param.Constant;
 import io.milvus.v2.client.MilvusClientV2;
@@ -61,12 +61,18 @@ public class MilvusInitializer implements ApplicationRunner {
 						.collectionName(defaultCollectionName)
 						.build();
 				milvusClient.describeCollection(request);
+				log.info("Collection '{}' 已存在...", defaultCollectionName);
 			} catch (Exception e) {
 
 				// 3. 如果 Collection 不存在，则创建它
 				log.info("Collection '{}' 不存在，开始创建...", defaultCollectionName);
 
 				CreateCollectionReq.CollectionSchema schema = MilvusClientV2.CreateSchema();
+				schema.addField(AddFieldReq.builder()
+						.fieldName("id")
+						.dataType(VarChar)
+						.build()
+				);
 				schema.addField(AddFieldReq.builder()
 						.fieldName("userId")
 						.dataType(VarChar)
@@ -84,9 +90,14 @@ public class MilvusInitializer implements ApplicationRunner {
 						.build()
 				);
 				schema.addField(AddFieldReq.builder()
-						.fieldName("memoryId")
-						.dataType(Int64)
+						.fieldName("messageId")
+						.dataType(VarChar)
 						.isPrimaryKey(true)
+						.build()
+				);
+				schema.addField(AddFieldReq.builder()
+						.fieldName("memoryId")
+						.dataType(VarChar)
 						.build()
 				);
 

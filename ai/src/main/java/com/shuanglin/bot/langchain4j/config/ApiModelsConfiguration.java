@@ -2,9 +2,7 @@ package com.shuanglin.bot.langchain4j.config;
 
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
-import com.shuanglin.bot.langchain4j.config.rag.NonMemoryRetriever;
 import com.shuanglin.bot.langchain4j.config.store.FilterMemoryStore;
-import com.shuanglin.bot.langchain4j.config.store.NonMemoryStore;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -43,6 +41,7 @@ public class ApiModelsConfiguration {
 				.modelName("gemma3:1b")
 				.build();
 	}
+
 	@Bean
 	public OllamaStreamingChatModel chatStreamingLanguageModel() {
 		return OllamaStreamingChatModel.builder()
@@ -58,11 +57,8 @@ public class ApiModelsConfiguration {
 	@Bean
 	public OllamaAssistant ollamaAssistant(OllamaChatModel ollamaChatModel,
 										   OllamaStreamingChatModel chatStreamingLanguageModel,
-										   NonMemoryStore nonMemoryStore,
-										   NonMemoryRetriever nonMemoryRetriever
-//	                                       RetrievalAugmentor retrievalAugmentor
-
-	) {
+										   RetrievalAugmentor chatRetrievalAugmentor,
+										   FilterMemoryStore filterMemoryStore) {
 
 		return AiServices.builder(OllamaAssistant.class)
 				.chatModel(ollamaChatModel)
@@ -70,14 +66,14 @@ public class ApiModelsConfiguration {
 				.chatMemoryProvider(modelId -> MessageWindowChatMemory.builder()
 						.id(modelId)
 						.maxMessages(10)
-						.chatMemoryStore(nonMemoryStore)
+						.chatMemoryStore(filterMemoryStore)
 						.build())
-				.contentRetriever(nonMemoryRetriever)
+				.retrievalAugmentor(chatRetrievalAugmentor)
 				.build();
 	}
 
 	@Bean
-	GoogleAiGeminiChatModel googleAiGeminiChatModel(GeminiProperties geminiProperties,List<ChatModelListener> chatModelListenerList) {
+	GoogleAiGeminiChatModel googleAiGeminiChatModel(GeminiProperties geminiProperties, List<ChatModelListener> chatModelListenerList) {
 		return GoogleAiGeminiChatModel.builder()
 				.apiKey(geminiProperties.getApiKey())
 				.modelName(geminiProperties.getModelName())
@@ -87,6 +83,7 @@ public class ApiModelsConfiguration {
 				.listeners(chatModelListenerList)
 				.build();
 	}
+
 	@Bean
 	GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel(GeminiProperties geminiProperties, List<ChatModelListener> chatModelListenerList) {
 		return GoogleAiGeminiStreamingChatModel.builder()
@@ -98,6 +95,7 @@ public class ApiModelsConfiguration {
 				.listeners(chatModelListenerList)
 				.build();
 	}
+
 	@Bean
 	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel localLLMModel,
 										   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,

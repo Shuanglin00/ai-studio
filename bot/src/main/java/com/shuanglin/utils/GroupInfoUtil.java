@@ -1,16 +1,14 @@
 package com.shuanglin.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shuanglin.dao.Model;
+import com.shuanglin.dao.model.Model;
 import com.shuanglin.dao.GroupInfo;
-import com.shuanglin.dao.ModelInfo;
-import com.shuanglin.dao.ModelsRepository;
+import com.shuanglin.dao.model.ModelInfo;
+import com.shuanglin.dao.model.ModelsRepository;
 import com.shuanglin.dao.SenderInfo;
-import com.shuanglin.dao.permission.PermissionRepository;
 import com.shuanglin.framework.bus.event.GroupMessageEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -34,13 +32,12 @@ public class GroupInfoUtil {
 	@Resource(name = "groupInfoRedisTemplate")
 	private final RedisTemplate<String, Object> groupInfoRedisTemplate;
 
-	private final PermissionRepository permissionRepository;
 
 	private final ModelsRepository modelsRepository;
 
 	public void publishModel(Model model) {
 		Model modelByModelName = modelsRepository.getModelByModelName(model.getModelName());
-		if (modelByModelName !=null) {
+		if (modelByModelName != null) {
 			log.info("已存在模型");
 			return;
 		}
@@ -51,13 +48,13 @@ public class GroupInfoUtil {
 
 	public void switchModel(SenderInfo senderInfo, String modelName) {
 		Model modelByModelName = modelsRepository.getModelByModelName(modelName);
-		if (modelByModelName !=null) {
+		if (modelByModelName != null) {
 			Map<String, SenderInfo> senderInfoMap = senderInfoRedisTemplate.opsForValue().get(GROUP_SENDER_STAFF + senderInfo.getGroupId());
 			ModelInfo modelInfo = senderInfo.getModelInfo();
-			modelInfo.setUseModel(modelByModelName.getId());
+			modelInfo.setModelName(modelByModelName.getModelName());
 			senderInfoMap.put(senderInfo.getUserId(), senderInfo);
 			senderInfoMap.remove(null);
-			senderInfoRedisTemplate.opsForHash().put(GROUP_SENDER_STAFF, senderInfo.getGroupId(), senderInfoMap);
+			senderInfoRedisTemplate.opsForValue().set(GROUP_SENDER_STAFF + senderInfo.getGroupId(), senderInfoMap);
 		}
 	}
 
@@ -80,7 +77,6 @@ public class GroupInfoUtil {
 
 	public SenderInfo getGroupSenderInfo(GroupMessageEvent groupMessageEvent) {
 		Map<String, SenderInfo> senderInfoMap = senderInfoRedisTemplate.opsForValue().get(GROUP_SENDER_STAFF + groupMessageEvent.getGroupId());
-		GroupInfo groupInfo = getGroupInfo(groupMessageEvent);
 		if (senderInfoMap == null) {
 			senderInfoMap = new HashMap<>();
 			SenderInfo.getInstance().setGroupId(groupMessageEvent.getGroupId());
@@ -88,28 +84,29 @@ public class GroupInfoUtil {
 			senderInfoRedisTemplate.opsForValue().set(GROUP_SENDER_STAFF + groupMessageEvent.getGroupId(), senderInfoMap);
 			return SenderInfo.getInstance();
 		}
-		if (senderInfoMap.get(groupMessageEvent.getSender().getUserId()) == null) {
+		if (senderInfoMap.get(String.valueOf(groupMessageEvent.getUserId())) == null) {
+			List<Model> actives = modelsRepository.getModelsByIsActive("true");
 			SenderInfo.getInstance().setGroupId(groupMessageEvent.getGroupId());
 			SenderInfo.getInstance().setUserId(String.valueOf(groupMessageEvent.getUserId()));
 			SenderInfo.getInstance().setModelInfo(ModelInfo.builder()
-					.activeModels(groupInfo.getModelInfo().getActiveModels())
-					.useModel(groupInfo.getModelInfo().getUseModel())
+					.activeModels(actives.stream().map(Model::getModelName).collect(Collectors.toList()))
+					.modelName(actives.get(0).getModelName())
 					.build());
-			senderInfoMap.put(groupMessageEvent.getSender().getUserId(), SenderInfo.getInstance());
+			senderInfoMap.put(String.valueOf(groupMessageEvent.getUserId()), SenderInfo.getInstance());
 			senderInfoMap.remove(null);
-			senderInfoRedisTemplate.opsForHash().put(GROUP_SENDER_STAFF, groupMessageEvent.getGroupId(), senderInfoMap);
+			senderInfoRedisTemplate.opsForValue().set(GROUP_SENDER_STAFF + groupMessageEvent.getGroupId(), senderInfoMap);
 			return SenderInfo.getInstance();
 		}
-		return senderInfoMap.get(groupMessageEvent.getSender().getUserId());
+		return senderInfoMap.get(String.valueOf(groupMessageEvent.getUserId()));
 	}
 
 	public GroupInfo getGroupInfo(GroupMessageEvent groupMessageEvent) {
 		GroupInfo groupInfo = new ObjectMapper().convertValue(groupInfoRedisTemplate.opsForHash().get(GROUP_INFO_STAFF, groupMessageEvent.getGroupId()), GroupInfo.class);
 		if (groupInfo == null) {
-			List<String> modelsByActive = modelsRepository.getModelsByIsActive("true").stream().map(Model::getId).collect(Collectors.toList());
+			List<String> modelsByActive = modelsRepository.getModelsByIsActive("true").stream().map(Model::getModelName).collect(Collectors.toList());
 			groupInfo = GroupInfo.getInstance();
 			groupInfo.setGroupId(groupMessageEvent.getGroupId());
-			groupInfo.setModelInfo(ModelInfo.builder().activeModels(modelsByActive).useModel(modelsByActive.isEmpty() ? "1" : modelsByActive.get(0)).build());
+			groupInfo.setModelInfo(ModelInfo.builder().activeModels(modelsByActive).modelName(modelsByActive.isEmpty() ? "1" : modelsByActive.get(0)).build());
 			GroupInfo.getInstance().setGroupId(groupMessageEvent.getGroupId());
 			groupInfoRedisTemplate.opsForHash().put(GROUP_INFO_STAFF, groupMessageEvent.getGroupId(), GroupInfo.getInstance());
 		}

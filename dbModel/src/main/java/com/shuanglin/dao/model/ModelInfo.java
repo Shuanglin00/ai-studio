@@ -1,17 +1,18 @@
-package com.shuanglin.dao;
+package com.shuanglin.dao.model;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class ModelInfo extends Model {
 
-	private String useModel;
 	private List<String> activeModels;
 
 }

@@ -1,5 +1,6 @@
 package com.shuanglin.dao;
 
+import com.shuanglin.dao.model.ModelInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class GroupInfo {
 				if (instance == null) { // 第二次检查
 					instance = GroupInfo.builder()
 							.modelInfo(ModelInfo.builder()
-									.useModel("1")
+									.modelName("1")
 									.activeModels(Collections.singletonList("1"))
 									.build())
 							.build();

@@ -6,24 +6,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document("model_knowledge")
+@Document("message_store")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class KnowledgeEntity {
+public class MessageStoreEntity {
 
 	private String id;
 
-	private String memoryId;
-
 	private String type;
+
+	private String memoryId;
 
 	private String content;
 
 	private String modelId;
-
-	private String modelName;
 
 	private String userId;
 

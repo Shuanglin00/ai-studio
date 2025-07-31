@@ -21,11 +21,17 @@ public class ChatContentInjector implements ContentInjector {
 
 	@Override
 	public ChatMessage inject(List<Content> contents, ChatMessage chatMessage) {
+		if (contents.isEmpty()) {
+			return chatMessage;
+		}
 		Map<String, Object> params = contents.get(0).textSegment().metadata().toMap();
 		StringJoiner collect = contents.stream().map(Content::textSegment).map(TextSegment::text)
 				.collect(() -> new StringJoiner("\n"), StringJoiner::add, StringJoiner::merge);
-		params.put("question", ((UserMessage) chatMessage).singleText());
-		params.put("contents", collect);
+		params.put("userMessage", ((UserMessage) chatMessage).singleText());
+		params.put("history", collect);
+		params.put("role",params.getOrDefault("modelName",""));
+		params.put("instruction",params.getOrDefault("instruction",""));
+		params.put("description",params.getOrDefault("description",""));
 		return chatPromptTemplate.apply(params).toUserMessage();
 	}
 }

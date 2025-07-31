@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.shuanglin.bot.db.MessageStoreEntity;
 import com.shuanglin.bot.langchain4j.config.store.DbQueryVO;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
-import com.shuanglin.dao.Model;
+import com.shuanglin.dao.model.Model;
+import com.shuanglin.dao.model.ModelsRepository;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -42,6 +44,8 @@ public class FilterQueryRetriever implements ContentRetriever {
 
 	private final MongoTemplate mongoTemplate;
 
+	private final ModelsRepository modelsRepository;
+
 	private final Gson gson;
 
 	private final MilvusProperties milvusProperties;
@@ -71,11 +75,8 @@ public class FilterQueryRetriever implements ContentRetriever {
 		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
 		JsonObject senderInfo = gson.toJsonTree(params.get("senderInfo")).getAsJsonObject();
 		JsonObject group = gson.toJsonTree(params.get("groupMessageEvent")).getAsJsonObject();
-		String groupId = group.get("group_id").getAsString();
-		String userId = group.get("user_id").getAsString();
-		String modelId = senderInfo.get("modelInfo").getAsJsonObject().get("useModel").getAsString();
-//		Model model = modelsRepository.getModelById(modelId);
-		Model model = new Model();
+		String modelName = senderInfo.get("modelInfo").getAsJsonObject().get("modelName").getAsString();
+		Model model = modelsRepository.getModelByModelName(modelName);
 		Map<String, Object> promptMap = gson.fromJson(gson.toJsonTree(model).getAsJsonObject(), new TypeToken<Map<String, Object>>() {}.getType());
 		log.info("==================== [START] Retrieval Process ====================");
 		// 消息 自动凭借 存入数据库需要根据相同memoryId覆盖 多个memory
@@ -117,7 +118,7 @@ public class FilterQueryRetriever implements ContentRetriever {
 			for (Map.Entry<String, JsonElement> entry : queryParams.entrySet()) {
 				mongoQuery.addCriteria(Criteria.where(entry.getKey()).is(entry.getValue().getAsString()));
 			}
-			List<String> mongoResult = mongoTemplate.find(mongoQuery, String.class);
+			List<MessageStoreEntity> mongoResult = mongoTemplate.find(mongoQuery, MessageStoreEntity.class);
 			// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
 
 
@@ -133,7 +134,7 @@ public class FilterQueryRetriever implements ContentRetriever {
 			List<Content> finalContentList = mongoResult.stream()
 					.map(document -> {
 						// 在这里，你可以从 document 构建非常丰富的元数据
-						return Content.from(TextSegment.textSegment(document, new Metadata(promptMap)));
+						return Content.from(TextSegment.textSegment(document.getContent() ==null?"":document.getContent(), new Metadata(promptMap)));
 					})
 					.collect(Collectors.toList());
 

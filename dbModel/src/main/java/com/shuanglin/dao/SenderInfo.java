@@ -1,8 +1,10 @@
 package com.shuanglin.dao;
 
+import com.shuanglin.dao.model.ModelInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Collections;
 
@@ -29,7 +31,7 @@ public class SenderInfo {
 					instance = SenderInfo.builder()
 							.userId("2784152733")
 							.modelInfo(ModelInfo.builder()
-									.useModel("1")
+									.modelName("1")
 									.activeModels(Collections.singletonList("1"))
 									.build())
 							.build();

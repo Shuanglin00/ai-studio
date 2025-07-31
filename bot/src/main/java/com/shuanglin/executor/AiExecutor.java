@@ -6,8 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.dao.GroupInfo;
-import com.shuanglin.dao.Model;
-import com.shuanglin.dao.ModelsRepository;
+import com.shuanglin.dao.model.Model;
+import com.shuanglin.dao.model.ModelsRepository;
 import com.shuanglin.dao.SenderInfo;
 import com.shuanglin.executor.vo.ChatParam;
 import com.shuanglin.framework.annotation.GroupMessageHandler;
@@ -36,10 +36,9 @@ public class AiExecutor {
 	public void chat(GroupMessageEvent group) {
 		//1. 获取当前用户信息;
 		SenderInfo senderInfo = groupInfoUtil.getGroupSenderInfo(group);
-		if (!groupInfoUtil.checkModelPermission(group, senderInfo.getModelInfo().getUseModel())) {
+		if (!groupInfoUtil.checkModelPermission(group, senderInfo.getModelInfo().getModelName())) {
 			return;
 		}
-		Model model = modelsRepository.getModelByModelName(senderInfo.getModelInfo().getUseModel());
 		String s = assistant.groupChat(gson.toJsonTree(ChatParam.builder().senderInfo(senderInfo).groupMessageEvent(group)).getAsJsonObject(), group.getMessage());
 		System.out.println("s = " + s);
 		JsonObject data1 = new JsonObject();
@@ -67,8 +66,6 @@ public class AiExecutor {
 		String[] params = group.getMessage().split(" ");
 
 		//1. 获取当前用户信息;
-		SenderInfo senderInfo = groupInfoUtil.getGroupSenderInfo(group);
-		GroupInfo groupInfo = groupInfoUtil.getGroupInfo(group);
 		Model model = new Model();
 		model.setModelName(params[0]);
 		model.setConstraints(params[1]);

@@ -1,4 +1,4 @@
-package com.shuanglin.dao;
+package com.shuanglin.dao.model;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -13,5 +13,4 @@ public interface ModelsRepository extends MongoRepository<Model, String> {
 
 	Model getModelByModelName(String modelName);
 
-	Model getModelById(String id);
 }

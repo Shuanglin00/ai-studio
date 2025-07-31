@@ -8,5 +8,5 @@ public class DbQueryVO {
 	private String type;
 	private String userId;
 	private String groupId;
-	private String modelId;
+	private String modelName;
 }

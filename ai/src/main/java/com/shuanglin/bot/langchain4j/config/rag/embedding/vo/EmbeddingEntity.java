@@ -15,5 +15,6 @@ public class EmbeddingEntity {
 	private String groupId;
 	private float[] embeddings;
 	private String memoryId;
+	private String messageId;
 
 }

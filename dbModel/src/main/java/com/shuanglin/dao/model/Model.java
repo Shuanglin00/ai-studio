@@ -1,12 +1,19 @@
-package com.shuanglin.dao;
+package com.shuanglin.dao.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 
 @Data
 @Document("model" )
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Model implements Serializable {
 
 	private String id;

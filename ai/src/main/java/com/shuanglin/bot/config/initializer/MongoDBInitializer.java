@@ -24,11 +24,11 @@ public class MongoDBInitializer implements ApplicationRunner {
 	private MongoTemplate mongoTemplate;
 
 	// 定义集合名称，方便管理
-	private static final String MODELS_COLLECTION = "models";
+	private static final String MODELS_COLLECTION = "model";
 	private static final String PERMISSIONS_COLLECTION = "groupModelPermissions";
 	private static final String SETTINGS_COLLECTION = "userGroupModelSettings";
 	// --- 新增：为 KnowledgeEntity 定义集合名称 ---
-	private static final String KNOWLEDGE_COLLECTION = "model_knowledge";
+	private static final String KNOWLEDGE_COLLECTION = "message_store";
 
 	@Override
 	public void run(ApplicationArguments args) {
@@ -43,7 +43,7 @@ public class MongoDBInitializer implements ApplicationRunner {
 			// 初始化 'userGroupModelSettings' 集合
 			initializeUserGroupModelSettingsCollection();
 
-			// --- 新增：初始化 'model_knowledge' 集合 ---
+			// --- 新增：初始化 'message_store' 集合 ---
 			initializeKnowledgeCollection();
 
 		} catch (Exception e) {
