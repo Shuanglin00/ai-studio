@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.shuanglin.bot.db.KnowledgeEntity;
 import com.shuanglin.bot.db.KnowledgeEntityRepository;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
+import com.shuanglin.bot.langchain4j.config.rag.embedding.vo.EmbeddingEntity;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.embedding.EmbeddingModel;

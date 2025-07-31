@@ -28,10 +28,13 @@ public interface GeminiAssistant  {
 			@V("question") String question);
 
 
-	@UserMessage(value = "{{question}}")
+	@UserMessage(value = """
+			{{question}}
+			""")
 	String groupChat(
 			@MemoryId JsonObject senderInfo,
-			@V("question") String question);
+			@V("question") String question
+	);
 
 	/**
 	 * 聊天流式输出

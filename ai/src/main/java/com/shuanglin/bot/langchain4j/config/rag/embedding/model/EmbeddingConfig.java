@@ -1,7 +1,6 @@
 package com.shuanglin.bot.langchain4j.config.rag.embedding.model;
 
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
-import com.shuanglin.bot.langchain4j.config.vo.base.EmbeddingModelProperties;
 import dev.langchain4j.community.model.dashscope.QwenEmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.springframework.context.annotation.Bean;
@@ -13,10 +12,9 @@ public class EmbeddingConfig {
     @Bean
     @Primary
     public EmbeddingModel qwenEmbeddingModel(QwenProperties qwenProperties) {
-        EmbeddingModelProperties properties = qwenProperties.getEmbeddingModel();
         return QwenEmbeddingModel.builder()
-                .apiKey(properties.getApiKey())
-                .modelName(properties.getModelName())
+                .apiKey(qwenProperties.getApiKey())
+                .modelName(qwenProperties.getModelName())
                 .build();
     }
 

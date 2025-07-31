@@ -15,6 +15,8 @@ public class KnowledgeEntity {
 
 	private String id;
 
+	private String memoryId;
+
 	private String type;
 
 	private String content;
