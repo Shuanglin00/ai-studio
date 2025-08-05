@@ -5,6 +5,7 @@ import com.google.gson.*;
 import com.shuanglin.bot.db.MessageStoreEntity;
 import com.shuanglin.bot.langchain4j.config.rag.embedding.vo.EmbeddingEntity;
 import com.shuanglin.enums.MongoDBConstant;
+import com.shuanglin.utils.JsonUtils;
 import dev.langchain4j.community.model.dashscope.QwenEmbeddingModel;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ChatMessageDeserializer;
@@ -14,6 +15,7 @@ import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.UpsertReq;
 import lombok.RequiredArgsConstructor;
+import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -21,6 +23,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,16 +39,16 @@ public class FilterMemoryStore implements ChatMemoryStore {
 
 	@Override
 	public List<ChatMessage> getMessages(Object json) {
-		JsonObject params = gson.toJsonTree(gson.fromJson(flatten(gson.toJsonTree(json).getAsJsonObject()), DbQueryVO.class)).getAsJsonObject();
-		Query query = getQuery(params);
-		Set<MessageStoreEntity> chatMessages = new HashSet<>(mongoTemplate.find(query, MessageStoreEntity.class));
+		JsonObject flatten = JsonUtils.flatten(gson.toJsonTree(json).getAsJsonObject());
+		return Collections.singletonList(UserMessage.from(flatten.get("message").getAsString()));
 //		return ChatMessageDeserializer.messagesFromJson(chatMessages.stream().map(MessageStoreEntity::getContent).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString());
-		return List.of();
+//		return List.of();
 	}
 
 	@Override
 	public void updateMessages(Object json, List<ChatMessage> messages) {
-		JsonObject params = gson.toJsonTree(gson.fromJson(flatten(gson.toJsonTree(json).getAsJsonObject()), DbQueryVO.class)).getAsJsonObject();
+		JsonObject params = JsonUtils.flatten(gson.toJsonTree(json).getAsJsonObject());
+		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
 		EmbeddingEntity embeddingEntity = gson.fromJson(params, EmbeddingEntity.class);
 		String id = IdUtil.getSnowflakeNextIdStr();
 		List<String> messageContents = messages.stream()
@@ -66,10 +70,10 @@ public class FilterMemoryStore implements ChatMemoryStore {
 		}
 
 // 2. 检查 'memoryId' 是否存在且有效
-		if (params.has("memoryId") && !params.get("memoryId").isJsonNull() && !params.get("memoryId").getAsString().isEmpty()) {
-			embeddingEntity.setMemoryId(params.get("memoryId").getAsString());
+		if (queryParams.has("memoryId") && !queryParams.get("memoryId").isJsonNull() && !queryParams.get("memoryId").getAsString().isEmpty()) {
+			embeddingEntity.setMemoryId(queryParams.get("memoryId").getAsString());
 			// --- 场景一: memoryId 存在 - 执行追加更新 ---
-			String memoryId = params.get("memoryId").getAsString();
+			String memoryId = queryParams.get("memoryId").getAsString();
 
 			// a. 构建查询条件，通过 memoryId 找到要更新的文档
 			Query query = Query.query(Criteria.where("memoryId").is(memoryId));
@@ -86,16 +90,51 @@ public class FilterMemoryStore implements ChatMemoryStore {
 			// --- 场景二: memoryId 不存在 - 创建新文档 ---
 			embeddingEntity.setMemoryId("");
 			// a. 创建并完整填充一个新的实体对象
-			MessageStoreEntity newEntity = new MessageStoreEntity();
-			newEntity.setId(id);
-			newEntity.setType(MongoDBConstant.StoreType.nonMemory.name());
-			newEntity.setContent(messageContents.toString());
+			MessageStoreEntity newEntity = gson.fromJson(params, MessageStoreEntity.class);
+			Set<String> validPropertyNames = new HashSet<>();
+			Class<?> currentClass = MessageStoreEntity.class;
+			// 遍历当前类及其所有父类（直到 Object 类），以获取所有继承的字段
+			while (currentClass != null && !currentClass.equals(Object.class)) {
+				for (Field field : currentClass.getDeclaredFields()) {
+					validPropertyNames.add(field.getName());
+				}
+				currentClass = currentClass.getSuperclass();
+			}
+			System.out.println("\nMessageStoreEntity 中所有合法的属性名: \n" + validPropertyNames);
 
+
+			// 3. 创建目标对象，这里使用 Document，也可以是 new HashMap<String, Object>()
+			Document targetDocument = new Document();
+
+			// 预先设置一些固定值
+			targetDocument.put("id", "some-generated-id");
+			targetDocument.put("type", "nonMemory");
+			targetDocument.put("content", "Some default content");
+
+			// 4. 遍历 JsonObject，匹配属性并赋值
+			Gson gson = new Gson(); // 用于将 JsonElement 转换回 Java 对象
+			for (Map.Entry<String, JsonElement> entry : params.entrySet()) {
+				String key = entry.getKey();
+
+				// 如果 JsonObject 的 key 存在于 POJO 的属性名集合中
+				if (validPropertyNames.contains(key)) {
+					JsonElement valueElement = entry.getValue();
+
+					// 将 JsonElement 转换为合适的 Java 类型
+					Object value = gson.fromJson(valueElement, Object.class);
+
+					// 放入目标 Document 中
+					targetDocument.put(key, value);
+					System.out.println("匹配成功: key='" + key + "' 已被添加.");
+				} else {
+					System.out.println("匹配失败: key='" + key + "' 在 MessageStoreEntity 中不存在，已忽略.");
+				}
+			}
 			mongoTemplate.insert(newEntity);
 		}
-		params.addProperty("messageId", id);
 		embeddingEntity.setEmbeddings(embeddingModel.embed(messageContents.get(0)).content().vector());
 		embeddingEntity.setId(IdUtil.getSnowflakeNextIdStr());
+		embeddingEntity.setMessageId(id);
 		milvusClientV2.upsert(UpsertReq.builder().collectionName("rag_embedding_collection").data(Collections.singletonList(gson.toJsonTree(embeddingEntity).getAsJsonObject())).build());
 	}
 
@@ -111,42 +150,5 @@ public class FilterMemoryStore implements ChatMemoryStore {
 	@Override
 	public void deleteMessages(Object json) {
 
-	}
-
-	public static JsonObject flatten(JsonObject sourceObject) {
-		// 最终返回的扁平化对象
-		JsonObject flattenedObject = new JsonObject();
-
-		// 创建一个栈，用于存放待处理的 JsonObject
-		Stack<JsonObject> processingStack = new Stack<>();
-
-		// 将最外层的源对象首先压入栈中
-		processingStack.push(sourceObject);
-
-		// 当栈中还有待处理的对象时，循环继续
-		while (!processingStack.isEmpty()) {
-			// 从栈中弹出一个对象进行处理
-			JsonObject currentObject = processingStack.pop();
-
-			// 遍历当前对象的所有属性
-			for (Map.Entry<String, JsonElement> entry : currentObject.entrySet()) {
-				String key = entry.getKey();
-				JsonElement value = entry.getValue();
-
-				// 检查属性的值是否是另一个 JsonObject
-				if (value.isJsonObject()) {
-					// 如果是，则将这个嵌套的 JsonObject 压入栈中，以便后续处理
-					processingStack.push(value.getAsJsonObject());
-				} else {
-					// 如果值不是 JsonObject（即是原始值、数组或 null），
-					// 这就是我们想要的“叶子节点”。
-					// 直接将其原始的键和值添加到最终的扁平化对象中。
-					// 注意：如果键已存在，此操作会覆盖旧值。
-					flattenedObject.add(key, value);
-				}
-			}
-		}
-
-		return flattenedObject;
 	}
 }

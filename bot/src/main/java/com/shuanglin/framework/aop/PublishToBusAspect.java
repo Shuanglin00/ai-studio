@@ -36,8 +36,8 @@ public class PublishToBusAspect {
 				String arg = (String)joinPoint.getArgs()[0];
 				messageBus.publish(new Gson().fromJson(arg, JsonObject.class));
 			} catch (Exception e) {
-				log.error("event {}",joinPoint.getArgs()[0]);
-				log.error("AOP: Error while processing return value for message type '{}': {}", messageType, e.getMessage());
+				log.info("event {}",joinPoint.getArgs()[0]);
+				log.info("AOP: Error while processing return value for message type '{}': {}", messageType, e.getMessage());
 			}
 		} else {
 			log.warn("AOP: Method returned null, no message published.");

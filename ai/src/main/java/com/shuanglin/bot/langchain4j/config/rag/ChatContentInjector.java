@@ -3,10 +3,12 @@ package com.shuanglin.bot.langchain4j.config.rag;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.injector.ContentInjector;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.StringJoiner;
 
 @Component("chatContentInjector")
 @RequiredArgsConstructor
+@Slf4j
 public class ChatContentInjector implements ContentInjector {
 
 	private final PromptTemplate chatPromptTemplate;
@@ -29,9 +32,11 @@ public class ChatContentInjector implements ContentInjector {
 				.collect(() -> new StringJoiner("\n"), StringJoiner::add, StringJoiner::merge);
 		params.put("userMessage", ((UserMessage) chatMessage).singleText());
 		params.put("history", collect);
-		params.put("role",params.getOrDefault("modelName",""));
+		params.put("modelName",params.getOrDefault("modelName",""));
 		params.put("instruction",params.getOrDefault("instruction",""));
 		params.put("description",params.getOrDefault("description",""));
-		return chatPromptTemplate.apply(params).toUserMessage();
+		Prompt apply = chatPromptTemplate.apply(params);
+		log.info("prompt: {}", apply.text());
+		return apply.toUserMessage();
 	}
 }

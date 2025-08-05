@@ -97,7 +97,7 @@ public class ApiModelsConfiguration {
 	}
 
 	@Bean
-	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel localLLMModel,
+	public GeminiAssistant geminiAssistant(GoogleAiGeminiChatModel chatModel,
 										   GoogleAiGeminiStreamingChatModel googleAiGeminiStreamingChatModel,
 										   FilterMemoryStore filterMemoryStore,
 										   RetrievalAugmentor chatRetrievalAugmentor
@@ -105,11 +105,11 @@ public class ApiModelsConfiguration {
 	) {
 
 		return AiServices.builder(GeminiAssistant.class)
-				.chatModel(localLLMModel)
+				.chatModel(chatModel)
 				.streamingChatModel(googleAiGeminiStreamingChatModel)
 				.chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
 						.id(memoryId)
-						.maxMessages(10)
+						.maxMessages(1) //自行存储message
 						.chatMemoryStore(filterMemoryStore)
 						.build())
 				.retrievalAugmentor(chatRetrievalAugmentor)

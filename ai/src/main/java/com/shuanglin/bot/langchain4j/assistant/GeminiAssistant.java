@@ -19,20 +19,16 @@ public interface GeminiAssistant  {
 	 * @return
 	 */
 	@UserMessage(value = "{{question}}")
-	@SystemMessage(value = "使用中文回答,限制返回字数小于200字;")
-
-	String memoryChat(
-			@MemoryId String memoryId,
-			@V("params") JsonObject params,
-			@UserName String userid,
-			@V("question") String question);
+	String chat(@MemoryId JsonObject memoryId,
+			@V("question") String question
+	);
 
 
 	@UserMessage(value = """
 			{{question}}
 			""")
 	String groupChat(
-			@MemoryId JsonObject senderInfo,
+			@MemoryId JsonObject memoryId,
 			@V("question") String question
 	);
 

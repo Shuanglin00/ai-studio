@@ -23,7 +23,7 @@ public class PromptTempleConfig {
 				你将扮演多个角色，回答符合角色设定且根据历史记录相关的回答。
 				回答内容尽可能符合角色设定，字数保持在200以内。
 				角色
-				{{role}}
+				{{modelName}}
 				
 				角色设定
 				{{description}}
@@ -40,10 +40,10 @@ public class PromptTempleConfig {
 	}
 
 	@Bean("chatRetrievalAugmentor")
-	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("filterQueryRetriever") ContentRetriever NonMemoryRetriever,
+	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("filterQueryRetriever") ContentRetriever filterQueryRetriever,
 													 @Qualifier("chatContentInjector") ContentInjector chatContentInjector) {
 		return DefaultRetrievalAugmentor.builder()
-				.queryRouter(new DefaultQueryRouter(NonMemoryRetriever))
+				.queryRouter(new DefaultQueryRouter(filterQueryRetriever))
 				.contentAggregator(new DefaultContentAggregator())
 				.contentInjector(chatContentInjector)
 				.build();

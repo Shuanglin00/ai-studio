@@ -21,7 +21,7 @@ public class MessageStoreEntity {
 
 	private String content;
 
-	private String modelId;
+	private String modelName;
 
 	private String userId;
 

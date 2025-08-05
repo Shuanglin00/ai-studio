@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.dao.GroupInfo;
 import com.shuanglin.dao.model.Model;
@@ -13,6 +14,7 @@ import com.shuanglin.executor.vo.ChatParam;
 import com.shuanglin.framework.annotation.GroupMessageHandler;
 import com.shuanglin.framework.bus.event.GroupMessageEvent;
 import com.shuanglin.utils.GroupInfoUtil;
+import com.shuanglin.utils.JsonUtils;
 import io.github.admin4j.http.util.HttpJsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +30,7 @@ public class AiExecutor {
 
 	private final GroupInfoUtil groupInfoUtil;
 
-	private final OllamaAssistant assistant;
+	private final GeminiAssistant assistant;
 
 	private final ModelsRepository modelsRepository;
 
@@ -39,10 +41,10 @@ public class AiExecutor {
 		if (!groupInfoUtil.checkModelPermission(group, senderInfo.getModelInfo().getModelName())) {
 			return;
 		}
-		String s = assistant.groupChat(gson.toJsonTree(ChatParam.builder().senderInfo(senderInfo).groupMessageEvent(group)).getAsJsonObject(), group.getMessage());
-		System.out.println("s = " + s);
+		String answer = assistant.groupChat(JsonUtils.flatten(gson.toJsonTree(ChatParam.builder().senderInfo(senderInfo).groupMessageEvent(group)).getAsJsonObject()), group.getMessage());
+		log.info(answer);
 		JsonObject data1 = new JsonObject();
-		data1.addProperty("text", s);
+		data1.addProperty("text", answer);
 		JsonArray messages = new JsonArray();
 		JsonObject jsonObject1 = new JsonObject();
 		jsonObject1.addProperty("type", "text");
@@ -77,7 +79,7 @@ public class AiExecutor {
 				"3. 你将扮演多个角色，回答符合角色设定且根据历史记录相关的回答。\n" +
 				"4. 回答内容尽可能符合角色设定，字数保持在200以内。");
 		groupInfoUtil.publishModel(model);
-
+		log.info("模型已发布-----");
 	}
 
 	@GroupMessageHandler(startWith = "#选择模型")

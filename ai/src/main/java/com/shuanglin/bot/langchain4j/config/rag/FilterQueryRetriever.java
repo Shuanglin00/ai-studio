@@ -1,7 +1,7 @@
 package com.shuanglin.bot.langchain4j.config.rag;
 
+import cn.hutool.core.util.StrUtil;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.shuanglin.bot.db.MessageStoreEntity;
@@ -73,9 +73,11 @@ public class FilterQueryRetriever implements ContentRetriever {
 		// 检查query是否包含SysMessage
 		JsonObject params = gson.toJsonTree(query.metadata().chatMemoryId()).getAsJsonObject();
 		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
-		JsonObject senderInfo = gson.toJsonTree(params.get("senderInfo")).getAsJsonObject();
-		JsonObject group = gson.toJsonTree(params.get("groupMessageEvent")).getAsJsonObject();
-		String modelName = senderInfo.get("modelInfo").getAsJsonObject().get("modelName").getAsString();
+		String modelName = "";
+		//初始化获取专家库信息
+		if (StrUtil.isNotBlank(params.get("modelName").getAsString())) {
+			modelName = params.get("modelName").getAsString();
+		}
 		Model model = modelsRepository.getModelByModelName(modelName);
 		Map<String, Object> promptMap = gson.fromJson(gson.toJsonTree(model).getAsJsonObject(), new TypeToken<Map<String, Object>>() {}.getType());
 		log.info("==================== [START] Retrieval Process ====================");
@@ -115,9 +117,7 @@ public class FilterQueryRetriever implements ContentRetriever {
 			log.info("[Step 3] Extracted memory IDs from search result: {}", messageIds);
 
 			org.springframework.data.mongodb.core.query.Query mongoQuery = new org.springframework.data.mongodb.core.query.Query();
-			for (Map.Entry<String, JsonElement> entry : queryParams.entrySet()) {
-				mongoQuery.addCriteria(Criteria.where(entry.getKey()).is(entry.getValue().getAsString()));
-			}
+			mongoQuery.addCriteria(Criteria.where("id").in(messageIds));
 			List<MessageStoreEntity> mongoResult = mongoTemplate.find(mongoQuery, MessageStoreEntity.class);
 			// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
 
@@ -134,7 +134,7 @@ public class FilterQueryRetriever implements ContentRetriever {
 			List<Content> finalContentList = mongoResult.stream()
 					.map(document -> {
 						// 在这里，你可以从 document 构建非常丰富的元数据
-						return Content.from(TextSegment.textSegment(document.getContent() ==null?"":document.getContent(), new Metadata(promptMap)));
+						return Content.from(TextSegment.textSegment(document.getContent() == null ? "" : document.getContent(), new Metadata(promptMap)));
 					})
 					.collect(Collectors.toList());
 
