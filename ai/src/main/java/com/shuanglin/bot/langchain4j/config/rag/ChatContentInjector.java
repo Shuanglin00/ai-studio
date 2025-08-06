@@ -11,16 +11,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
 @Component("chatContentInjector")
-@RequiredArgsConstructor
 @Slf4j
 public class ChatContentInjector implements ContentInjector {
-
-	private final PromptTemplate chatPromptTemplate;
+	@Resource(name = "storePromptTemplate")
+	private PromptTemplate storePromptTemplate;
 
 	@Override
 	public ChatMessage inject(List<Content> contents, ChatMessage chatMessage) {
@@ -30,13 +30,12 @@ public class ChatContentInjector implements ContentInjector {
 		Map<String, Object> params = contents.get(0).textSegment().metadata().toMap();
 		StringJoiner collect = contents.stream().map(Content::textSegment).map(TextSegment::text)
 				.collect(() -> new StringJoiner("\n"), StringJoiner::add, StringJoiner::merge);
+		params.put("content", collect);
 		params.put("userMessage", ((UserMessage) chatMessage).singleText());
-		params.put("history", collect);
-		params.put("modelName",params.getOrDefault("modelName",""));
-		params.put("instruction",params.getOrDefault("instruction",""));
-		params.put("description",params.getOrDefault("description",""));
-		Prompt apply = chatPromptTemplate.apply(params);
-		log.info("prompt: {}", apply.text());
+//		params.put("modelName",params.getOrDefault("modelName",""));
+//		params.put("instruction",params.getOrDefault("instruction",""));
+//		params.put("description",params.getOrDefault("description",""));
+		Prompt apply = storePromptTemplate.apply(params);
 		return apply.toUserMessage();
 	}
 }

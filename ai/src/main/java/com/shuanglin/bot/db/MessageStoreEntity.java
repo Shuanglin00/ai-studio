@@ -1,5 +1,6 @@
 package com.shuanglin.bot.db;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class MessageStoreEntity {
 
+	@SerializedName("messageId")
 	private String id;
 
 	private String type;
@@ -23,8 +25,10 @@ public class MessageStoreEntity {
 
 	private String modelName;
 
+	@SerializedName(value = "userId", alternate = {"user_id"})
 	private String userId;
 
+	@SerializedName(value = "groupId", alternate = {"group_id"})
 	private String groupId;
 
 	private Long lastChatTime;

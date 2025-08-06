@@ -21,13 +21,9 @@ public interface OllamaAssistant {
 	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @return
 	 */
-	@UserMessage(value = "{{question}}")
-	@SystemMessage(value = "使用中文回答,限制返回字数小于200字")
 	String chat(
-			@MemoryId String memoryId,
-			@V("role") String role,
-			@UserName String userid,
-			@V("question") String question);
+			@MemoryId JsonObject params,
+			@UserMessage String question);
 
 	/**
 	 * 聊天流式输出

@@ -68,13 +68,6 @@ public class MongoDBInitializer implements ApplicationRunner {
 		log.info("为集合 '{}' 检查并创建索引...", KNOWLEDGE_COLLECTION);
 		MongoCollection<Document> collection = mongoTemplate.getCollection(KNOWLEDGE_COLLECTION);
 
-		// 创建复合索引，以极大地优化基于 groupId, userId 和 modelId 的查询
-		Document compoundIndexKeys = new Document("groupId", 1)
-				.append("userId", 1)
-				.append("modelId", 1);
-		collection.createIndex(compoundIndexKeys);
-		log.info(" -> 复合索引 on 'groupId', 'userId' & 'modelId' 已确保存在。");
-
 		// 为 lastChatTime 创建倒序索引，以便快速按时间排序，获取最新记录
 		// -1 表示倒序 (descending)
 		collection.createIndex(new Document("lastChatTime", -1));

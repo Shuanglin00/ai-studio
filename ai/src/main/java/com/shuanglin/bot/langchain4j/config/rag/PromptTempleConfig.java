@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class PromptTempleConfig {
 
 	@Bean("chatPromptTemplate")
-	public PromptTemplate defalutPromptTemplate() {
+	public PromptTemplate chatPromptTemplate() {
 		return PromptTemplate.from("""
 				首先基础原则
 				你必须遵守中华人民共和国法律法规，不得逾越或触碰任何违法甚至损害中国形象。
@@ -39,11 +39,21 @@ public class PromptTempleConfig {
 				""");
 	}
 
+	@Bean("storePromptTemplate")
+	public PromptTemplate storePromptTemplate() {
+		return PromptTemplate.from("""
+				前提剧情概要：
+				{{content}}
+				用户提问:
+				{{userMessage}}
+				""");
+	}
+
 	@Bean("chatRetrievalAugmentor")
-	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("filterQueryRetriever") ContentRetriever filterQueryRetriever,
+	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("multiStepQueryRetriever") ContentRetriever multiStepQueryRetriever,
 													 @Qualifier("chatContentInjector") ContentInjector chatContentInjector) {
 		return DefaultRetrievalAugmentor.builder()
-				.queryRouter(new DefaultQueryRouter(filterQueryRetriever))
+				.queryRouter(new DefaultQueryRouter(multiStepQueryRetriever))
 				.contentAggregator(new DefaultContentAggregator())
 				.contentInjector(chatContentInjector)
 				.build();

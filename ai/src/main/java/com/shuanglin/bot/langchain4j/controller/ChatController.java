@@ -1,6 +1,8 @@
 package com.shuanglin.bot.langchain4j.controller;
 
+import cn.hutool.core.util.IdUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
@@ -34,16 +36,15 @@ public class ChatController {
 	@Resource
 	private DocumentInitializer documentInitializer;
 
-	@GetMapping("/ask")
-	public String ask(HttpServletRequest request,
-	                  @RequestParam(value = "memoryId", required = false) String memoryId,
-	                  @RequestParam(value = "model", required = false) String role,
-	                  @RequestParam(value = "userId", required = false) String userId,
-	                  @RequestParam(value = "question") String question){
+	@Resource
+	Gson gson;
+
+	@PostMapping("/ask")
+	public String ask(@RequestBody String message) {
+		JsonObject params = gson.fromJson(message,JsonObject.class).getAsJsonObject();
 		// 日志入口
-		request.setAttribute("memoryId", memoryId);
-		request.setAttribute("userId", userId);
-		String answer= ollamaAssistant.chat(memoryId,role,userId, question);
+		params.addProperty("messageId",IdUtil.getSnowflakeNextIdStr());
+		String answer= ollamaAssistant.chat(params,params.get("message").getAsString());
 		return answer;
 	}
 
@@ -101,7 +102,7 @@ public class ChatController {
 	}
 
 	@PostMapping("/readFile")
-	public void readDocumentFromStream(HttpRequest request, @RequestParam("file") MultipartFile multiFile) {
+	public void readDocumentFromStream(@RequestParam("file") MultipartFile multiFile) {
 		try {
 
 			// 获取文件名
@@ -113,7 +114,7 @@ public class ChatController {
 			File file = File.createTempFile(fileName, prefix);
 			multiFile.transferTo(file);
 
-			String s = documentInitializer.readFile(request,file);
+			String s = documentInitializer.readFile(new JsonObject(),file);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

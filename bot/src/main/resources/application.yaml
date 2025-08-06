@@ -14,11 +14,14 @@ spring:
     #      uri: mongodb://:27017/chatDB
     redis:
       database: 1
-      host: 192.168.31.105
+      host: 172.18.32.160
     mongodb:
-      host: 192.168.31.105
+      host: 172.18.32.160
       port: 27017
       database: chatDB
+      username: 'shuanglin'
+      password: '123456'
+      authentication-database: admin
     milvus:
       url: ${milvus.url}
       host: ${milvus.host}
@@ -38,11 +41,15 @@ langchain4j:
       apiKey: sk-ef837a5f684c4ed087802c948857df5f
       location: us-central1
       modelName: text-embedding-v2
+    ollama:
+      url: http://8.138.204.38:11434
+      modelName: gemma3:12b
+      temperature: 0.8
 
 milvus:
-  url: http://192.168.31.105:19530
-  host: 192.168.31.105
+  url: http://172.18.32.160:19530
+  host: 172.18.32.160
   port: 19530
-  defaultDatabaseName: chatEmbeddingDB5
+  defaultDatabaseName: chatEmbeddingDB6
   defaultCollectionName: rag_embedding_collection
   topK: 5

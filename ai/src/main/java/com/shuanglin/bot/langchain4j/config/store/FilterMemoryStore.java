@@ -40,9 +40,16 @@ public class FilterMemoryStore implements ChatMemoryStore {
 	@Override
 	public List<ChatMessage> getMessages(Object json) {
 		JsonObject flatten = JsonUtils.flatten(gson.toJsonTree(json).getAsJsonObject());
-		return Collections.singletonList(UserMessage.from(flatten.get("message").getAsString()));
-//		return ChatMessageDeserializer.messagesFromJson(chatMessages.stream().map(MessageStoreEntity::getContent).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString());
-//		return List.of();
+		if (flatten.has("messageId")) {
+			org.springframework.data.mongodb.core.query.Query mongoQuery = new org.springframework.data.mongodb.core.query.Query();
+			mongoQuery.addCriteria(Criteria.where("messageId").in(flatten.get("messageId").getAsString()));
+			List<MessageStoreEntity> mongoResult = mongoTemplate.find(mongoQuery, MessageStoreEntity.class);
+			if (mongoResult.isEmpty()) {
+				return Collections.emptyList();
+			}
+			return Collections.singletonList(UserMessage.from(mongoResult.get(0).getContent()));
+		}
+		return List.of();
 	}
 
 	@Override
@@ -50,7 +57,7 @@ public class FilterMemoryStore implements ChatMemoryStore {
 		JsonObject params = JsonUtils.flatten(gson.toJsonTree(json).getAsJsonObject());
 		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
 		EmbeddingEntity embeddingEntity = gson.fromJson(params, EmbeddingEntity.class);
-		String id = IdUtil.getSnowflakeNextIdStr();
+		String messageId = params.get("messageId").getAsString();
 		List<String> messageContents = messages.stream()
 				.map(item -> {
 					if (item instanceof UserMessage message) {
@@ -64,9 +71,6 @@ public class FilterMemoryStore implements ChatMemoryStore {
 // 如果没有有效消息内容，则不执行任何数据库操作
 		if (messageContents.isEmpty()) {
 			return; // 或者 continue/break，取决于您的外部循环结构
-		}
-		if (messageContents.size() > 1) {
-			throw new RuntimeException();
 		}
 
 // 2. 检查 'memoryId' 是否存在且有效
@@ -90,51 +94,20 @@ public class FilterMemoryStore implements ChatMemoryStore {
 			// --- 场景二: memoryId 不存在 - 创建新文档 ---
 			embeddingEntity.setMemoryId("");
 			// a. 创建并完整填充一个新的实体对象
-			MessageStoreEntity newEntity = gson.fromJson(params, MessageStoreEntity.class);
-			Set<String> validPropertyNames = new HashSet<>();
-			Class<?> currentClass = MessageStoreEntity.class;
-			// 遍历当前类及其所有父类（直到 Object 类），以获取所有继承的字段
-			while (currentClass != null && !currentClass.equals(Object.class)) {
-				for (Field field : currentClass.getDeclaredFields()) {
-					validPropertyNames.add(field.getName());
-				}
-				currentClass = currentClass.getSuperclass();
-			}
-			System.out.println("\nMessageStoreEntity 中所有合法的属性名: \n" + validPropertyNames);
+			Query query = Query.query(Criteria.where("messageId").is(messageId));
 
+			// b. 构建更新操作，只包含 $push 指令
+			Update update = new Update();
+			update.addToSet("userId", params.get("user_id").getAsString());
+			update.addToSet("groupId", params.get("group_id").getAsString());
+			update.push("content").each(messageContents);
 
-			// 3. 创建目标对象，这里使用 Document，也可以是 new HashMap<String, Object>()
-			Document targetDocument = new Document();
-
-			// 预先设置一些固定值
-			targetDocument.put("id", "some-generated-id");
-			targetDocument.put("type", "nonMemory");
-			targetDocument.put("content", "Some default content");
-
-			// 4. 遍历 JsonObject，匹配属性并赋值
-			Gson gson = new Gson(); // 用于将 JsonElement 转换回 Java 对象
-			for (Map.Entry<String, JsonElement> entry : params.entrySet()) {
-				String key = entry.getKey();
-
-				// 如果 JsonObject 的 key 存在于 POJO 的属性名集合中
-				if (validPropertyNames.contains(key)) {
-					JsonElement valueElement = entry.getValue();
-
-					// 将 JsonElement 转换为合适的 Java 类型
-					Object value = gson.fromJson(valueElement, Object.class);
-
-					// 放入目标 Document 中
-					targetDocument.put(key, value);
-					System.out.println("匹配成功: key='" + key + "' 已被添加.");
-				} else {
-					System.out.println("匹配失败: key='" + key + "' 在 MessageStoreEntity 中不存在，已忽略.");
-				}
-			}
-			mongoTemplate.insert(newEntity);
+			// c. 执行更新，将新消息追加到找到的文档中
+			mongoTemplate.upsert(query, update, MessageStoreEntity.class);
 		}
 		embeddingEntity.setEmbeddings(embeddingModel.embed(messageContents.get(0)).content().vector());
 		embeddingEntity.setId(IdUtil.getSnowflakeNextIdStr());
-		embeddingEntity.setMessageId(id);
+		embeddingEntity.setMessageId(messageId);
 		milvusClientV2.upsert(UpsertReq.builder().collectionName("rag_embedding_collection").data(Collections.singletonList(gson.toJsonTree(embeddingEntity).getAsJsonObject())).build());
 	}
 

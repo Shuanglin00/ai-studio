@@ -4,7 +4,9 @@ import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.store.FilterMemoryStore;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
+import com.shuanglin.bot.langchain4j.config.vo.OllamaProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
+import com.shuanglin.bot.langchain4j.tools.DocumentInsertTool;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
@@ -13,10 +15,12 @@ import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.service.AiServices;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -26,42 +30,52 @@ import java.util.List;
  * @date 2025/06/27
  */
 @Configuration
-@EnableConfigurationProperties({GeminiProperties.class, QwenProperties.class})
+@EnableConfigurationProperties({GeminiProperties.class, QwenProperties.class, OllamaProperties.class})
 public class ApiModelsConfiguration {
+	@Resource
+	private DocumentInsertTool documentInsertTool;
 
-
-	@Bean
-	public OllamaChatModel chatLanguageModel() {
+	@Bean("decomposeLanguageModel")
+	public OllamaChatModel decomposeLanguageModel(OllamaProperties ollamaProperties) {
 		return OllamaChatModel.builder()
-				.baseUrl("http://localhost:11434")
-				.temperature(0.0) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
-				.logRequests(true)
+				.baseUrl(ollamaProperties.getUrl())
+				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
 				.logRequests(true)
 				.logResponses(true)
 				.modelName("gemma3:1b")
 				.build();
 	}
 
+	@Bean("chatLanguageModel")
+	public OllamaChatModel chatLanguageModel(OllamaProperties ollamaProperties) {
+		return OllamaChatModel.builder()
+				.baseUrl(ollamaProperties.getUrl())
+				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.logRequests(true)
+				.logResponses(true)
+				.modelName(ollamaProperties.getModelName())
+				.build();
+	}
+
 	@Bean
-	public OllamaStreamingChatModel chatStreamingLanguageModel() {
+	public OllamaStreamingChatModel chatStreamingLanguageModel(OllamaProperties ollamaProperties) {
 		return OllamaStreamingChatModel.builder()
-				.baseUrl("http://localhost:11434")
-				.temperature(0.0) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
-				.logRequests(true)
+				.baseUrl(ollamaProperties.getUrl())
+				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
 				.logRequests(true)
 				.logResponses(true)
-				.modelName("gemma3:1b")
+				.modelName(ollamaProperties.getModelName())
 				.build();
 	}
 
 	@Bean
-	public OllamaAssistant ollamaAssistant(OllamaChatModel ollamaChatModel,
+	public OllamaAssistant ollamaAssistant(@Qualifier("chatLanguageModel") OllamaChatModel chatLanguageModel,
 										   OllamaStreamingChatModel chatStreamingLanguageModel,
 										   RetrievalAugmentor chatRetrievalAugmentor,
 										   FilterMemoryStore filterMemoryStore) {
 
 		return AiServices.builder(OllamaAssistant.class)
-				.chatModel(ollamaChatModel)
+				.chatModel(chatLanguageModel)
 				.streamingChatModel(chatStreamingLanguageModel)
 				.chatMemoryProvider(modelId -> MessageWindowChatMemory.builder()
 						.id(modelId)
