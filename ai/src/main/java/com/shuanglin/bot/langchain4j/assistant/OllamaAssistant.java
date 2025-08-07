@@ -6,6 +6,10 @@ import reactor.core.publisher.Flux;
 
 public interface OllamaAssistant {
 
+
+	String v4Chat(@MemoryId JsonObject params, @UserMessage String question
+	);
+
 	@UserMessage(value = """
 			{{question}}
 			""")
@@ -17,7 +21,7 @@ public interface OllamaAssistant {
 	/**
 	 * 聊天
 	 *
-	 * @param role     设定角色，通过@V注解替换掉system-message.txt中的role变量
+	 * @param params     设定角色，通过@V注解替换掉system-message.txt中的role变量
 	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @return
 	 */
@@ -28,7 +32,6 @@ public interface OllamaAssistant {
 	/**
 	 * 聊天流式输出
 	 *
-	 * @param sessionId 会话id，通过@MemoryId指定
 	 * @param role      设定角色，通过@V注解替换掉system-message.txt中的role变量
 	 * @param question  原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @param extraInfo 额外信息
@@ -44,7 +47,6 @@ public interface OllamaAssistant {
 	/**
 	 * 聊天流式输出，返回TokenStream
 	 *
-	 * @param sessionId 会话id，通过@MemoryId指定
 	 * @param role      设定角色，通过@V注解替换掉system-message.txt中的role变量
 	 * @param question  原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @param extraInfo 额外信息

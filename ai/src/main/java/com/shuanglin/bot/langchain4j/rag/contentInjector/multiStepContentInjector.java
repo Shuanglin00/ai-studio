@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config.rag;
+package com.shuanglin.bot.langchain4j.rag.contentInjector;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -7,20 +7,24 @@ import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.injector.ContentInjector;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-@Component("chatContentInjector")
-@Slf4j
-public class ChatContentInjector implements ContentInjector {
-	@Resource(name = "storePromptTemplate")
-	private PromptTemplate storePromptTemplate;
+@Component
+public class multiStepContentInjector implements ContentInjector {
+
+	public PromptTemplate multiStepPromptTemplate() {
+		return PromptTemplate.from("""
+				前提剧情概要：
+				{{content}}
+				用户提问:
+				{{userMessage}}
+				""");
+	}
 
 	@Override
 	public ChatMessage inject(List<Content> contents, ChatMessage chatMessage) {
@@ -32,10 +36,7 @@ public class ChatContentInjector implements ContentInjector {
 				.collect(() -> new StringJoiner("\n"), StringJoiner::add, StringJoiner::merge);
 		params.put("content", collect);
 		params.put("userMessage", ((UserMessage) chatMessage).singleText());
-//		params.put("modelName",params.getOrDefault("modelName",""));
-//		params.put("instruction",params.getOrDefault("instruction",""));
-//		params.put("description",params.getOrDefault("description",""));
-		Prompt apply = storePromptTemplate.apply(params);
+		Prompt apply = multiStepPromptTemplate().apply(params);
 		return apply.toUserMessage();
 	}
 }

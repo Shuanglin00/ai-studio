@@ -1,11 +1,8 @@
-package com.shuanglin.bot.langchain4j.config.rag;
+package com.shuanglin.bot.langchain4j.rag.retriever;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.shuanglin.bot.db.MessageStoreEntity;
 import com.shuanglin.bot.langchain4j.assistant.DecomposeAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
-import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -21,9 +18,6 @@ import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
@@ -71,9 +65,6 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 			log.info("问题: {}", item.text());
 		});
 		// 步骤 3 & 4: 对每个子查询进行检索并聚合结果
-		// 使用Set来自动处理重复的Content
-		Set<Content> allRelevantContent = new LinkedHashSet<>();
-
 		log.info("[步骤 3] 正在对每个子问题进行并行检索...");
 		List<Embedding> content = embeddingModel.embedAll(subQueries).content();
 		List<BaseVector> floatVecs = content.stream().map(item-> new FloatVec(item.vector())).collect(Collectors.toList());

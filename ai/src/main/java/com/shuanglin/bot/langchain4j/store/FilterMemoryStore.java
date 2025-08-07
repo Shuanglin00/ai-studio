@@ -1,21 +1,17 @@
-package com.shuanglin.bot.langchain4j.config.store;
+package com.shuanglin.bot.langchain4j.store;
 
 import cn.hutool.core.util.IdUtil;
 import com.google.gson.*;
 import com.shuanglin.bot.db.MessageStoreEntity;
-import com.shuanglin.bot.langchain4j.config.rag.embedding.vo.EmbeddingEntity;
-import com.shuanglin.enums.MongoDBConstant;
+import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
 import com.shuanglin.utils.JsonUtils;
-import dev.langchain4j.community.model.dashscope.QwenEmbeddingModel;
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.ChatMessageDeserializer;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.UpsertReq;
 import lombok.RequiredArgsConstructor;
-import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,11 +19,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Component("filterMemoryStore")
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config.rag;
+package com.shuanglin.bot.langchain4j.rag;
 
 import org.springframework.context.annotation.Configuration;
 

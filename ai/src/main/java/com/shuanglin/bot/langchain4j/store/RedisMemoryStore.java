@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config.store;
+package com.shuanglin.bot.langchain4j.store;
 
 import cn.hutool.core.util.StrUtil;
 import com.google.gson.Gson;

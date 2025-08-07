@@ -2,7 +2,7 @@ package com.shuanglin.bot.langchain4j.config;
 
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
-import com.shuanglin.bot.langchain4j.config.store.FilterMemoryStore;
+import com.shuanglin.bot.langchain4j.store.FilterMemoryStore;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.OllamaProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
@@ -65,6 +65,18 @@ public class ApiModelsConfiguration {
 				.logRequests(true)
 				.logResponses(true)
 				.modelName(ollamaProperties.getModelName())
+				.build();
+	}
+
+	@Bean("assistant_v4")
+	public OllamaAssistant assistant_v4(@Qualifier("chatLanguageModel") OllamaChatModel chatLanguageModel,
+										   OllamaStreamingChatModel chatStreamingLanguageModel,
+										   RetrievalAugmentor chatRetrievalAugmentor) {
+
+		return AiServices.builder(OllamaAssistant.class)
+				.chatModel(chatLanguageModel)
+				.streamingChatModel(chatStreamingLanguageModel)
+				.retrievalAugmentor(chatRetrievalAugmentor)
 				.build();
 	}
 

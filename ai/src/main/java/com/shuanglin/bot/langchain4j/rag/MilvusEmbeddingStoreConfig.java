@@ -1,14 +1,11 @@
-package com.shuanglin.bot.langchain4j.config.rag;
+package com.shuanglin.bot.langchain4j.rag;
 
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.Resource;
 
 @Configuration
 @EnableConfigurationProperties({MilvusProperties.class})

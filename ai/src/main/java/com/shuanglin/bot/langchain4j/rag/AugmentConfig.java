@@ -1,4 +1,4 @@
-package com.shuanglin.bot.langchain4j.config.rag;
+package com.shuanglin.bot.langchain4j.rag;
 
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class PromptTempleConfig {
+public class AugmentConfig {
 
 	@Bean("chatPromptTemplate")
 	public PromptTemplate chatPromptTemplate() {
@@ -39,14 +39,14 @@ public class PromptTempleConfig {
 				""");
 	}
 
-	@Bean("storePromptTemplate")
-	public PromptTemplate storePromptTemplate() {
-		return PromptTemplate.from("""
-				前提剧情概要：
-				{{content}}
-				用户提问:
-				{{userMessage}}
-				""");
+	@Bean("multiStepAugment")
+	public RetrievalAugmentor multiStepAugment(@Qualifier("multiStepQueryRetriever") ContentRetriever multiStepQueryRetriever,
+											   @Qualifier("multiStepContentInjector") ContentInjector multiStepContentInjector) {
+		return DefaultRetrievalAugmentor.builder()
+				.queryRouter(new DefaultQueryRouter(multiStepQueryRetriever))
+				.contentAggregator(new DefaultContentAggregator())
+				.contentInjector(multiStepContentInjector)
+				.build();
 	}
 
 	@Bean("chatRetrievalAugmentor")
