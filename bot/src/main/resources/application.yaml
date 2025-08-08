@@ -51,5 +51,5 @@ milvus:
   host: 172.18.32.160
   port: 19530
   defaultDatabaseName: chatEmbeddingDB6
-  defaultCollectionName: rag_embedding_collection
+  messageCollectionName: message_embedding
   topK: 5

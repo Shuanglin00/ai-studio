@@ -3,10 +3,12 @@ package com.shuanglin.bot.langchain4j.config;
 import cn.hutool.core.util.IdUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.shuanglin.bot.db.MessageStoreEntity;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
+import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
+import com.shuanglin.bot.langchain4j.rag.embedding.vo.MessageEmbeddingEntity;
 import com.shuanglin.bot.utils.FileReadUtil;
 import com.shuanglin.bot.utils.ProjectReaderUtil;
+import com.shuanglin.dao.message.MessageStoreEntity;
+import com.shuanglin.enums.MongoDBConstant;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import io.milvus.v2.client.MilvusClientV2;
@@ -14,7 +16,6 @@ import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.UpsertReq;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -37,12 +38,6 @@ import java.util.zip.ZipFile;
 @Slf4j
 public class DocumentInitializer {
 
-	@Value("${spring.data.milvus.defaultDatabaseName}")
-	private String defaultDatabaseName; // 默认数据库名
-
-	@Value("${spring.data.milvus.defaultCollectionName}")
-	private String defaultCollectionName; // 默认集合名
-
 	@Resource
 	MilvusClientV2 milvusClientV2;
 
@@ -55,6 +50,9 @@ public class DocumentInitializer {
 	@Resource
 	Gson gson;
 
+	@Resource
+	MilvusProperties milvusProperties;
+
 	/**
 	 * 读取单个文件内容，将其作为一个整体处理，生成向量并存储。
 	 *
@@ -65,7 +63,7 @@ public class DocumentInitializer {
 	public String readFile(JsonObject params, File file) {
 		if (file == null || !file.exists()) {
 			log.error("尝试读取空文件或不存在的文件: {}", file != null ? file.getAbsolutePath() : "null");
-			return defaultCollectionName;
+			return milvusProperties.getMessageCollectionName();
 		}
 
 		// 检查是否是 ZIP 文件，如果是，调用处理 ZIP 的方法
@@ -83,7 +81,7 @@ public class DocumentInitializer {
 		} catch (IOException | InvalidFormatException e) {
 			log.error("读取单个文件 {} 时发生错误: {}", file.getAbsolutePath(), e.getMessage(), e);
 		}
-		return defaultCollectionName;
+		return milvusProperties.getMessageCollectionName();
 	}
 
 	/**
@@ -105,11 +103,6 @@ public class DocumentInitializer {
 	 * @return 默认集合名。
 	 */
 	public String processZipFile(JsonObject params, File zipFile) {
-		// ... (这里是之前 processZipFile 方法的代码) ...
-		// 确保这个方法的内容是完整的，如下面的 "processZipFile 方法的完整代码" 部分
-
-//		String userId = getUserIdFromRequest(params);
-//		String groupId = getGroupIdFromRequest(params);
 
 		List<JsonObject> milvusInsertData = new ArrayList<>();
 		List<MessageStoreEntity> mongoUpsertData = new ArrayList<>();
@@ -150,15 +143,15 @@ public class DocumentInitializer {
 			}
 		} catch (IOException e) {
 			log.error("读取 ZIP 文件 {} 时发生错误: {}", zipFile.getAbsolutePath(), e.getMessage(), e);
-			return defaultCollectionName;
+			return milvusProperties.getMessageCollectionName();
 		}
 
 		// 批量插入 Milvus
 		if (!milvusInsertData.isEmpty()) {
 			try {
-				log.info("开始向 Milvus 批量插入 {} 个文件的数据到集合: {}", milvusInsertData.size(), defaultCollectionName);
+				log.info("开始向 Milvus 批量插入 {} 个文件的数据到集合: {}", milvusInsertData.size(), milvusProperties.getMessageCollectionName());
 				milvusClientV2.insert(InsertReq.builder()
-						.collectionName(defaultCollectionName)
+						.collectionName(milvusProperties.getMessageCollectionName())
 						.data(milvusInsertData)
 						.build());
 				log.info("成功向 Milvus 批量插入 {} 个文件的数据。", milvusInsertData.size());
@@ -185,7 +178,7 @@ public class DocumentInitializer {
 			}
 		}
 
-		return defaultCollectionName;
+		return milvusProperties.getMessageCollectionName();
 	}
 
 
@@ -207,8 +200,8 @@ public class DocumentInitializer {
 		// 如果是独立调用 readFile 或 learnStr，则需要在此处执行批量存储
 		if (!milvusInsertData.isEmpty()) {
 			try {
-				log.info("开始向 Milvus 批量插入 {} 条数据到集合: {}", milvusInsertData.size(), defaultCollectionName);
-				milvusClientV2.upsert(UpsertReq.builder().collectionName("rag_embedding_collection").data(milvusInsertData).build());
+				log.info("开始向 Milvus 批量插入 {} 条数据到集合: {}", milvusInsertData.size(), milvusProperties.getMessageCollectionName());
+				milvusClientV2.upsert(UpsertReq.builder().collectionName(milvusProperties.getMessageCollectionName()).data(milvusInsertData).build());
 				log.info("成功向 Milvus 批量插入数据。");
 			} catch (Exception e) {
 				log.error("批量插入 Milvus 失败: {}", e.getMessage(), e);
@@ -250,24 +243,20 @@ public class DocumentInitializer {
 			return;
 		}
 
-//		String userId = getUserIdFromRequest(params);
-//		String groupId = getGroupIdFromRequest(params);
-
 		// 为每个文件生成一个唯一的 ID (memoryId)
 		String segmentId = IdUtil.getSnowflake().nextIdStr();
 
 		// 创建一个 TextSegment 来包装整个内容
-		// metadata 中可以包含更多信息，例如 originalFileName
 		TextSegment textSegment = TextSegment.from(content);
 
 		// 1. 生成嵌入向量
 		log.debug("为内容 '{}' 生成嵌入向量...", contentIdentifier);
 		float[] vector = embeddingModel.embed(textSegment).content().vector();
-		EmbeddingEntity embeddingEntity = gson.fromJson(params, EmbeddingEntity.class);
+		MessageEmbeddingEntity embeddingEntity = gson.fromJson(params, MessageEmbeddingEntity.class);
 		embeddingEntity.setEmbeddings(vector);
-		embeddingEntity.setMessageId(segmentId);
+		embeddingEntity.setStoreType(MongoDBConstant.StoreType.document.name());
+		embeddingEntity.setStoreId(segmentId);
 		embeddingEntity.setId(IdUtil.getSnowflakeNextIdStr());
-		embeddingEntity.setMemoryId("");
 		// 2. 准备 Milvus 插入数据
 		JsonObject milvusObject = gson.toJsonTree(embeddingEntity).getAsJsonObject();
 		milvusInsertData.add(milvusObject);
@@ -276,7 +265,6 @@ public class DocumentInitializer {
 		MessageStoreEntity dbMessage = gson.fromJson(params, MessageStoreEntity.class);
 		dbMessage.setId(segmentId); // 使用生成的唯一 ID
 		dbMessage.setContent(content); // 存储整个文件的文本内容
-		dbMessage.setModelName("斗破苍穹-风格写作模型");
 		dbMessage.setLastChatTime(System.currentTimeMillis());
 		mongoUpsertData.add(dbMessage);
 	}

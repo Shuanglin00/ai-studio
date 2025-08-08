@@ -1,4 +1,4 @@
-package com.shuanglin.bot.db;
+package com.shuanglin.dao.message;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
@@ -17,9 +17,9 @@ public class MessageStoreEntity {
 	@SerializedName("messageId")
 	private String id;
 
-	private String type;
-
 	private String memoryId;
+
+	private String type;
 
 	private String content;
 
@@ -30,6 +30,8 @@ public class MessageStoreEntity {
 
 	@SerializedName(value = "groupId", alternate = {"group_id"})
 	private String groupId;
+
+	private String tags;
 
 	private Long lastChatTime;
 }

@@ -20,7 +20,7 @@ public class MilvusProperties {
 
 	private String defaultDatabaseName;
 
-	private String defaultCollectionName;
+	private String messageCollectionName;
 
 	private Integer topK;
 

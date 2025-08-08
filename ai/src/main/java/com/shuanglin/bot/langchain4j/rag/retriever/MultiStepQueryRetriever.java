@@ -1,8 +1,9 @@
 package com.shuanglin.bot.langchain4j.rag.retriever;
 
-import com.shuanglin.bot.db.MessageStoreEntity;
 import com.shuanglin.bot.langchain4j.assistant.DecomposeAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
+import com.shuanglin.dao.message.MessageStoreEntity;
+import com.shuanglin.enums.MongoDBConstant;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -70,14 +71,15 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 		List<BaseVector> floatVecs = content.stream().map(item-> new FloatVec(item.vector())).collect(Collectors.toList());
 		SearchReq searchRequest = SearchReq.builder()
 				.databaseName(milvusProperties.getDefaultDatabaseName())
-				.collectionName(milvusProperties.getDefaultCollectionName())
+				.collectionName(milvusProperties.getMessageCollectionName())
+				.filterTemplateValues(Map.of("storeType", MongoDBConstant.StoreType.document.name()))
 				.data(floatVecs)
 				.topK(milvusProperties.getTopK())
 				.build();
 		SearchResp vecSearch = milvusClientV2.search(searchRequest);
 		List<String> messageIds = vecSearch.getSearchResults().stream()
 				.flatMap(Collection::stream)
-				.map(match -> match.getId().toString()) // 假设 ID 是字符串类型
+				.map(match -> match.getEntity().get("storeId").toString()) // 假设 ID 是字符串类型
 				.collect(Collectors.toList());
 
 		log.info("[Step 3] Extracted memory IDs from search result: {}", messageIds);
@@ -103,7 +105,7 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 					// 在这里，你可以从 document 构建非常丰富的元数据
 					return Content.from(TextSegment.textSegment(document.getContent() == null ? "" : document.getContent()));
 				})
-				.collect(Collectors.toList());
+				.toList();
 
 		log.info("[Step 5] Mapping complete. Returning {} Content objects.", finalContentList.size());
 		log.info("==================== [END] Retrieval Process (Success) ====================");

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EmbeddingEntity {
+public class MessageEmbeddingEntity {
 
 	private String id;
 
@@ -20,13 +20,13 @@ public class EmbeddingEntity {
 	@SerializedName(value = "groupId", alternate = {"group_id"})
 	private String groupId;
 
+	private String storeType;
+
 	private String modelName;
 
 	private float[] embeddings;
 
-	private String memoryId;
-
-	private String messageId;
+	private String storeId;
 
 
 }
