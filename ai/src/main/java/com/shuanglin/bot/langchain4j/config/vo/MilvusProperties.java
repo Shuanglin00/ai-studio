@@ -1,14 +1,17 @@
 package com.shuanglin.bot.langchain4j.config.vo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.dromara.milvus.plus.config.MilvusPropertiesConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @ConfigurationProperties(prefix = MilvusProperties.PREFIX)
-public class MilvusProperties {
+public class MilvusProperties extends MilvusPropertiesConfiguration {
 	public static final String PREFIX = "milvus";
 
-	private String url;
+	private String uri;
 
 	private String host;
 
@@ -18,9 +21,7 @@ public class MilvusProperties {
 
 	private String password;
 
-	private String defaultDatabaseName;
-
-	private String messageCollectionName;
+	private String dbName;
 
 	private Integer topK;
 

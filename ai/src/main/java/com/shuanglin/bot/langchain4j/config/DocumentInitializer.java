@@ -22,7 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +89,7 @@ public class DocumentInitializer {
 	 * @param params 用于获取 sender 和 groupId 的 HttpRequest 对象。
 	 * @param str 要处理的文档字符串。
 	 */
-	public void learnStr(JsonObject params, String str) {
+	public void read(JsonObject params, String str) {
 		// 使用一个通用的标识符来代表这个字符串，例如 "string_content"
 		processSingleContent(params, str, "string_content");
 	}

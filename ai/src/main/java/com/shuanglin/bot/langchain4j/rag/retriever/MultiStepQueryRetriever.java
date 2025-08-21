@@ -3,6 +3,8 @@ package com.shuanglin.bot.langchain4j.rag.retriever;
 import com.shuanglin.bot.langchain4j.assistant.DecomposeAssistant;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
 import com.shuanglin.dao.message.MessageStoreEntity;
+import com.shuanglin.dao.message.MessageStoreEntityRepository;
+import com.shuanglin.dao.milvus.MessageEmbeddingMapper;
 import com.shuanglin.enums.MongoDBConstant;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -17,13 +19,12 @@ import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.BaseVector;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,11 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 
 	private final MilvusClientV2 milvusClientV2;
 
+	private final MessageEmbeddingMapper messageEmbeddingMapper;
+
 	private final EmbeddingModel embeddingModel;
+
+	private final MessageStoreEntityRepository messageStoreEntityRepository;
 
 	private final MilvusProperties milvusProperties;
 
@@ -62,7 +67,7 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 
 		log.info("[步骤 2] LLM已将查询分解为以下子问题:");
 		List<TextSegment> subQueries = Arrays.stream(decomposeQuery.split("\n")).toList().stream().map(TextSegment::from).toList();
-		subQueries.stream().forEach(item->{
+		subQueries.forEach(item -> {
 			log.info("问题: {}", item.text());
 		});
 		// 步骤 3 & 4: 对每个子查询进行检索并聚合结果
@@ -70,13 +75,11 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 		List<Embedding> content = embeddingModel.embedAll(subQueries).content();
 		List<BaseVector> floatVecs = content.stream().map(item-> new FloatVec(item.vector())).collect(Collectors.toList());
 		SearchReq searchRequest = SearchReq.builder()
-				.databaseName(milvusProperties.getDefaultDatabaseName())
-				.collectionName(milvusProperties.getMessageCollectionName())
 				.filterTemplateValues(Map.of("storeType", MongoDBConstant.StoreType.document.name()))
 				.data(floatVecs)
 				.topK(milvusProperties.getTopK())
 				.build();
-		SearchResp vecSearch = milvusClientV2.search(searchRequest);
+		SearchResp vecSearch = messageEmbeddingMapper.getClient().search(searchRequest);
 		List<String> messageIds = vecSearch.getSearchResults().stream()
 				.flatMap(Collection::stream)
 				.map(match -> match.getEntity().get("storeId").toString()) // 假设 ID 是字符串类型
@@ -85,9 +88,7 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 		log.info("[Step 3] Extracted memory IDs from search result: {}", messageIds);
 
 		// -------------------- 步骤 3: 从 Milvus 结果中提取 memoryId --------------------
-		org.springframework.data.mongodb.core.query.Query mongoQuery = new org.springframework.data.mongodb.core.query.Query();
-		mongoQuery.addCriteria(Criteria.where("messageId").in(messageIds));
-		List<MessageStoreEntity> mongoResult = mongoTemplate.find(mongoQuery, MessageStoreEntity.class);
+		List<MessageStoreEntity> mongoResult = messageStoreEntityRepository.findAllById(messageIds);
 		// -------------------- 步骤 4: 使用 memoryId 从 MongoDB 获取原始数据 --------------------
 
 
@@ -108,11 +109,8 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 				.toList();
 
 		log.info("[Step 5] Mapping complete. Returning {} Content objects.", finalContentList.size());
-		log.info("==================== [END] Retrieval Process (Success) ====================");
 		log.info("==================== [Multi-Step RAG 结束] ====================");
 
 		return new ArrayList<>(finalContentList);
-
-
 	}
 }

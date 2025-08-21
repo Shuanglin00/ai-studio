@@ -9,14 +9,14 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class EmbeddingConfig {
-    @Bean
-    @Primary
-    public EmbeddingModel qwenEmbeddingModel(QwenProperties qwenProperties) {
-        return QwenEmbeddingModel.builder()
-                .apiKey(qwenProperties.getApiKey())
-                .modelName(qwenProperties.getModelName())
-                .build();
-    }
+	@Bean
+	@Primary
+	public EmbeddingModel qwenEmbeddingModel(QwenProperties qwenProperties) {
+		return QwenEmbeddingModel.builder()
+				.apiKey(qwenProperties.getApiKey())
+				.modelName(qwenProperties.getModelName())
+				.build();
+	}
 
 //	@Bean
 //	public EmbeddingModel embeddingModel() {

@@ -44,9 +44,10 @@ langchain4j:
       temperature: 0.8
 
 milvus:
-  url: http://172.18.32.160:19530
-  host: 172.18.32.160
-  port: 19530
-  defaultDatabaseName: chatEmbeddingDB6
-  defaultCollectionName: rag_embedding_collection
-  topK: 5
+  uri: http://172.18.32.160:19530
+  enable: true
+  open-log: true
+  db-name: chatEmbeddingDB6
+  packages:
+    - com.shuanglin.dao.milvus
+  top-k: 5

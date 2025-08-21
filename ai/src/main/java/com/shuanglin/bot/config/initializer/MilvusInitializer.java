@@ -10,13 +10,13 @@ import io.milvus.v2.service.collection.request.DescribeCollectionReq;
 import io.milvus.v2.service.database.request.CreateDatabaseReq;
 import io.milvus.v2.service.database.request.DescribeDatabaseReq;
 import io.milvus.v2.service.database.response.DescribeDatabaseResp;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 

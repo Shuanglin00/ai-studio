@@ -7,17 +7,14 @@ import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import dev.langchain4j.service.TokenStream;
-import io.github.admin4j.http.HttpRequest;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
-import retrofit2.http.Multipart;
 
-import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 
@@ -118,5 +115,14 @@ public class ChatController {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@PostMapping("/read")
+	public String read(@RequestBody String body) {
+		JsonObject params = new JsonObject();
+		params.addProperty("userId", "1751649231");
+		params.addProperty("modelName", "123");
+		documentInitializer.read(params, body);
+		return "OK";
 	}
 }

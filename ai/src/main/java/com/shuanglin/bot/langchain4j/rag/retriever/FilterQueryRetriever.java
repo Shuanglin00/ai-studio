@@ -5,8 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.shuanglin.bot.db.MessageStoreEntity;
-import com.shuanglin.bot.langchain4j.store.DbQueryVO;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
+import com.shuanglin.bot.langchain4j.store.DbQueryVO;
 import com.shuanglin.dao.model.Model;
 import com.shuanglin.dao.model.ModelsRepository;
 import dev.langchain4j.data.document.Metadata;
@@ -79,7 +79,8 @@ public class FilterQueryRetriever implements ContentRetriever {
 			modelName = params.get("modelName").getAsString();
 		}
 		Model model = modelsRepository.getModelByModelName(modelName);
-		Map<String, Object> promptMap = gson.fromJson(gson.toJsonTree(model).getAsJsonObject(), new TypeToken<Map<String, Object>>() {}.getType());
+		Map<String, Object> promptMap = gson.fromJson(gson.toJsonTree(model).getAsJsonObject(), new TypeToken<Map<String, Object>>() {
+		}.getType());
 		log.info("==================== [START] Retrieval Process ====================");
 		// 消息 自动凭借 存入数据库需要根据相同memoryId覆盖 多个memory
 		try {
