@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.shuanglin.bot.langchain4j.config.DocumentInitializer;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
-import dev.langchain4j.service.MemoryId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +14,6 @@ public class DocumentInsertTool {
 
 	@Tool("将用户问题作为知识进行入库")
 	void insertDocument(@ToolMemoryId JsonObject params) {
-		documentInitializer.learnStr(params,params.get("message").getAsString());
+		documentInitializer.read(params, params.get("message").getAsString());
 	}
 }

@@ -4,7 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.MessageEmbeddingEntity;
+import com.shuanglin.dao.milvus.MessageEmbeddingEntity;
 import com.shuanglin.bot.utils.FileReadUtil;
 import com.shuanglin.bot.utils.ProjectReaderUtil;
 import com.shuanglin.dao.message.MessageStoreEntity;

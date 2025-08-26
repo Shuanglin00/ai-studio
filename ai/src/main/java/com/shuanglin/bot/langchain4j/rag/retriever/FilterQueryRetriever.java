@@ -4,9 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import com.shuanglin.bot.db.MessageStoreEntity;
+import com.shuanglin.dao.message.MessageStoreEntity;
 import com.shuanglin.bot.langchain4j.config.vo.MilvusProperties;
-import com.shuanglin.bot.langchain4j.store.DbQueryVO;
 import com.shuanglin.dao.model.Model;
 import com.shuanglin.dao.model.ModelsRepository;
 import dev.langchain4j.data.document.Metadata;
@@ -72,7 +71,7 @@ public class FilterQueryRetriever implements ContentRetriever {
 	public List<Content> retrieve(Query query) {
 		// 检查query是否包含SysMessage
 		JsonObject params = gson.toJsonTree(query.metadata().chatMemoryId()).getAsJsonObject();
-		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
+		JsonObject queryParams = gson.toJsonTree(params).getAsJsonObject();
 		String modelName = "";
 		//初始化获取专家库信息
 		if (StrUtil.isNotBlank(params.get("modelName").getAsString())) {

@@ -25,4 +25,9 @@ public class MilvusProperties extends MilvusPropertiesConfiguration {
 
 	private Integer topK;
 
+	/**
+	 * 向量集合名（RAG向量表名）
+	 */
+	private String messageCollectionName;
+
 }

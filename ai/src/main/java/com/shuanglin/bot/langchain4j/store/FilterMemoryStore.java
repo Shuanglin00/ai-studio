@@ -2,8 +2,8 @@ package com.shuanglin.bot.langchain4j.store;
 
 import cn.hutool.core.util.IdUtil;
 import com.google.gson.*;
-import com.shuanglin.bot.db.MessageStoreEntity;
-import com.shuanglin.bot.langchain4j.rag.embedding.vo.EmbeddingEntity;
+import com.shuanglin.dao.message.MessageStoreEntity;
+import com.shuanglin.dao.milvus.MessageEmbeddingEntity;
 import com.shuanglin.utils.JsonUtils;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -47,8 +47,8 @@ public class FilterMemoryStore implements ChatMemoryStore {
 	@Override
 	public void updateMessages(Object json, List<ChatMessage> messages) {
 		JsonObject params = JsonUtils.flatten(gson.toJsonTree(json).getAsJsonObject());
-		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, DbQueryVO.class)).getAsJsonObject();
-		EmbeddingEntity embeddingEntity = gson.fromJson(params, EmbeddingEntity.class);
+		JsonObject queryParams = gson.toJsonTree(params).getAsJsonObject();
+		MessageEmbeddingEntity embeddingEntity = gson.fromJson(params, MessageEmbeddingEntity.class);
 		String messageId = params.get("messageId").getAsString();
 		List<String> messageContents = messages.stream()
 				.map(item -> {
@@ -67,7 +67,6 @@ public class FilterMemoryStore implements ChatMemoryStore {
 
 // 2. 检查 'memoryId' 是否存在且有效
 		if (queryParams.has("memoryId") && !queryParams.get("memoryId").isJsonNull() && !queryParams.get("memoryId").getAsString().isEmpty()) {
-			embeddingEntity.setMemoryId(queryParams.get("memoryId").getAsString());
 			// --- 场景一: memoryId 存在 - 执行追加更新 ---
 			String memoryId = queryParams.get("memoryId").getAsString();
 
@@ -84,14 +83,13 @@ public class FilterMemoryStore implements ChatMemoryStore {
 		} else {
 
 			// --- 场景二: memoryId 不存在 - 创建新文档 ---
-			embeddingEntity.setMemoryId("");
 			// a. 创建并完整填充一个新的实体对象
 			Query query = Query.query(Criteria.where("messageId").is(messageId));
 
 			// b. 构建更新操作，只包含 $push 指令
 			Update update = new Update();
-			update.addToSet("userId", params.get("user_id").getAsString());
-			update.addToSet("groupId", params.get("group_id").getAsString());
+			update.addToSet("userId", params.get("userId").getAsString());
+			update.addToSet("groupId", params.get("groupId").getAsString());
 			update.push("content").each(messageContents);
 
 			// c. 执行更新，将新消息追加到找到的文档中
@@ -99,7 +97,7 @@ public class FilterMemoryStore implements ChatMemoryStore {
 		}
 		embeddingEntity.setEmbeddings(embeddingModel.embed(messageContents.get(0)).content().vector());
 		embeddingEntity.setId(IdUtil.getSnowflakeNextIdStr());
-		embeddingEntity.setMessageId(messageId);
+		embeddingEntity.setStoreId(messageId);
 		milvusClientV2.upsert(UpsertReq.builder().collectionName("rag_embedding_collection").data(Collections.singletonList(gson.toJsonTree(embeddingEntity).getAsJsonObject())).build());
 	}
 

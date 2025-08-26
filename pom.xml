@@ -13,6 +13,7 @@
         <module>bot</module>
         <module>dbModel</module>
         <module>common</module>
+        <module>core</module>
     </modules>
 
     <properties>
