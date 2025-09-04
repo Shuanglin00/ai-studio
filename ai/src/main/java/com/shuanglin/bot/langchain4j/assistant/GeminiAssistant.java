@@ -2,7 +2,6 @@ package com.shuanglin.bot.langchain4j.assistant;
 
 import com.google.gson.JsonObject;
 import dev.langchain4j.service.*;
-import reactor.core.publisher.Flux;
 /**
  * 封装的Gemini Assistant chat入口
  *
@@ -14,7 +13,7 @@ public interface GeminiAssistant  {
 	/**
 	 *
 	 * 聊天
-	 * @param role 设定角色，通过@V注解替换掉system-message.txt中的role变量
+	 * @param memoryId 设定角色，通过@V注解替换掉system-message.txt中的role变量
 	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @return
 	 */
@@ -32,24 +31,9 @@ public interface GeminiAssistant  {
 			@V("question") String question
 	);
 
-	/**
-	 * 聊天流式输出
-	 * @param sessionId 会话id，通过@MemoryId指定
-	 * @param role 设定角色，通过@V注解替换掉system-message.txt中的role变量
-	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
-	 * @param extraInfo 额外信息
-	 * @return
-	 */
-	@SystemMessage(fromResource = "prompt/system-message.txt")
-	@UserMessage(fromResource = "prompt/user-message.txt")
-	Flux<String> chatStreamFlux(
-			@V("role") String role,
-			@V("question") String question,
-			@V("extraInfo") String extraInfo);
 
 	/**
 	 * 聊天流式输出，返回TokenStream
-	 * @param sessionId 会话id，通过@MemoryId指定
 	 * @param role 设定角色，通过@V注解替换掉system-message.txt中的role变量
 	 * @param question 原始问题，通过@V注解替换掉user-message.txt中的question变量
 	 * @param extraInfo 额外信息

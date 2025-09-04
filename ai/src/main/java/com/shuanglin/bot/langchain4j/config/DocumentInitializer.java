@@ -215,8 +215,6 @@ public class DocumentInitializer {
 					Query query = new Query(Criteria.where("id").is(message.getId()));
 					Update update = new Update()
 							.set("content", message.getContent())
-							.set("userId", message.getUserId())
-							.set("groupId", message.getGroupId())
 							.set("id", message.getId())
 							.set("lastChatTime", message.getLastChatTime());
 					mongoTemplate.upsert(query, update, MessageStoreEntity.class);

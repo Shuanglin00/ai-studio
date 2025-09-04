@@ -80,11 +80,8 @@ public class MultiStepMemoryStore implements ChatMemoryStore {
 	@Override
 	public void updateMessages(Object memoryId, List<ChatMessage> messages) {
 		JsonObject params = JsonUtils.flatten(gson.toJsonTree(memoryId).getAsJsonObject());
-		JsonObject queryParams = gson.toJsonTree(gson.fromJson(params, MessageStoreEntity.class)).getAsJsonObject();
 		MessageEmbeddingEntity embeddingEntity = gson.fromJson(params, MessageEmbeddingEntity.class);
-
 		embeddingEntity.setStoreType(MongoDBConstant.StoreType.memory.name());
-		queryParams.addProperty("type", MongoDBConstant.StoreType.memory.name());
 		Query query = new Query();
 		// b. 构建更新操作，只包含 $push 指令
 		Update update = new Update();
@@ -92,9 +89,8 @@ public class MultiStepMemoryStore implements ChatMemoryStore {
 		if (messages.isEmpty()) {
 			return;
 		}
-		queryParams.entrySet().forEach(entry -> {
-			query.addCriteria(Criteria.where(entry.getKey()).is(entry.getValue()));
-		});
+		update.set("id",IdUtil.getSnowflakeNextIdStr());
+		update.set("messageId", params.get("messageId").getAsString());
 		update.set("content", messages);
 		mongoTemplate.upsert(query, update, MessageStoreEntity.class);
 		// 只将userMessage存储向量库，即只存储消息会话向量

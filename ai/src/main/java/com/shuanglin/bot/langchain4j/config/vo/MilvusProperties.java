@@ -6,9 +6,8 @@ import org.dromara.milvus.plus.config.MilvusPropertiesConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @ConfigurationProperties(prefix = MilvusProperties.PREFIX)
-public class MilvusProperties extends MilvusPropertiesConfiguration {
+public class MilvusProperties  {
 	public static final String PREFIX = "milvus";
 
 	private String uri;

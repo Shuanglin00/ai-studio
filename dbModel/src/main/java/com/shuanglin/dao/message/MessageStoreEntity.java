@@ -14,24 +14,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class MessageStoreEntity {
 
-	@SerializedName("messageId")
 	private String id;
+
+	private String messageId;
 
 	private String memoryId;
 
 	private String type;
 
 	private String content;
-
-	private String modelName;
-
-	@SerializedName(value = "userId", alternate = {"user_id"})
-	private String userId;
-
-	@SerializedName(value = "groupId", alternate = {"group_id"})
-	private String groupId;
-
-	private String tags;
 
 	private Long lastChatTime;
 }

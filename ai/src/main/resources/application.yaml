@@ -28,6 +28,11 @@ spring:
   servlet:
     multipart:
       max-file-size: 20MB
+  neo4j:
+    uri: bolt://8.138.204.38:7687
+    authentication:
+      username: neo4j
+      password: Sl123456
 langchain4j:
   models:
     gemini:
