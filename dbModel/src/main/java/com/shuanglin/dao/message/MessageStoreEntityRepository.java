@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 @Repository
 public interface MessageStoreEntityRepository extends MongoRepository<MessageStoreEntity, String> {
-	List<MessageStoreEntity> findByGroupIdAndUserIdAndModelName(String groupId, String userId, String modelName);
 
 }

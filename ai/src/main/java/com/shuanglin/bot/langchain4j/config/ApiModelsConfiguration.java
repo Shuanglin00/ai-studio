@@ -6,7 +6,6 @@ import com.shuanglin.bot.langchain4j.store.FilterMemoryStore;
 import com.shuanglin.bot.langchain4j.config.vo.GeminiProperties;
 import com.shuanglin.bot.langchain4j.config.vo.OllamaProperties;
 import com.shuanglin.bot.langchain4j.config.vo.QwenProperties;
-import com.shuanglin.bot.langchain4j.tools.DocumentInsertTool;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
@@ -32,8 +31,6 @@ import java.util.List;
 @Configuration
 @EnableConfigurationProperties({GeminiProperties.class, QwenProperties.class, OllamaProperties.class})
 public class ApiModelsConfiguration {
-	@Resource
-	private DocumentInsertTool documentInsertTool;
 
 	@Bean("decomposeLanguageModel")
 	public OllamaChatModel decomposeLanguageModel(OllamaProperties ollamaProperties) {
@@ -68,17 +65,6 @@ public class ApiModelsConfiguration {
 				.build();
 	}
 
-	@Bean("assistant_v4")
-	public OllamaAssistant assistant_v4(@Qualifier("chatLanguageModel") OllamaChatModel chatLanguageModel,
-										   OllamaStreamingChatModel chatStreamingLanguageModel,
-										   RetrievalAugmentor chatRetrievalAugmentor) {
-
-		return AiServices.builder(OllamaAssistant.class)
-				.chatModel(chatLanguageModel)
-				.streamingChatModel(chatStreamingLanguageModel)
-				.retrievalAugmentor(chatRetrievalAugmentor)
-				.build();
-	}
 
 	@Bean
 	public OllamaAssistant ollamaAssistant(@Qualifier("chatLanguageModel") OllamaChatModel chatLanguageModel,

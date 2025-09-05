@@ -14,7 +14,7 @@ spring:
     #      uri: mongodb://:27017/chatDB
     redis:
       database: 1
-      host: 172.18.32.160
+      host: 8.138.204.38
     mongodb:
       host: 8.138.204.38
       port: 27017
@@ -49,10 +49,12 @@ langchain4j:
       temperature: 0.8
 
 milvus:
-  uri: http://172.18.32.160:19530
+  uri: http://8.138.204.38:19530
   enable: true
   open-log: true
   db-name: chatEmbeddingDB6
   packages:
     - com.shuanglin.dao.milvus
   top-k: 5
+  defaultDatabaseName: chatDB
+  defaultCollectionName: chatEmbeddingDB6

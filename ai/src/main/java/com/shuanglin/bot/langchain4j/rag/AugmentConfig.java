@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AugmentConfig {
 
-	@Bean("chatPromptTemplate")
+	@Bean("storePromptTemplate")
 	public PromptTemplate chatPromptTemplate() {
 		return PromptTemplate.from("""
 				首先基础原则
@@ -49,13 +49,13 @@ public class AugmentConfig {
 				.build();
 	}
 
-	@Bean("chatRetrievalAugmentor")
-	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("multiStepQueryRetriever") ContentRetriever multiStepQueryRetriever,
-													 @Qualifier("chatContentInjector") ContentInjector chatContentInjector) {
-		return DefaultRetrievalAugmentor.builder()
-				.queryRouter(new DefaultQueryRouter(multiStepQueryRetriever))
-				.contentAggregator(new DefaultContentAggregator())
-				.contentInjector(chatContentInjector)
-				.build();
-	}
+//	@Bean("chatRetrievalAugmentor")
+//	public RetrievalAugmentor chatRetrievalAugmentor(@Qualifier("multiStepQueryRetriever") ContentRetriever multiStepQueryRetriever,
+//													 @Qualifier("chatContentInjector") ContentInjector chatContentInjector) {
+//		return DefaultRetrievalAugmentor.builder()
+//				.queryRouter(new DefaultQueryRouter(multiStepQueryRetriever))
+//				.contentAggregator(new DefaultContentAggregator())
+//				.contentInjector(chatContentInjector)
+//				.build();
+//	}
 }
