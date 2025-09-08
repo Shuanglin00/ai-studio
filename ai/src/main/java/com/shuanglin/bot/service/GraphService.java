@@ -35,7 +35,6 @@ public class GraphService {
 			inner:for (int i = 1; i < parseResult.getContentList().size() - 2; i++) {
 				DecomposeAssistant assistant = AiServices.builder(DecomposeAssistant.class).chatModel(decomposeLanguageModel).build();
 				String decomposeQuery = assistant.enhancedEntityExtraction(parseResult.getContentList().get(i), parseResult.getContentList().get(i - 1), parseResult.getContentList().get(i + 1));
-				System.out.println("s = " + decomposeQuery);
 				executeCypher(decomposeQuery);
 				break big;
 			}

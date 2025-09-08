@@ -1,7 +1,9 @@
 package com.shuanglin.bot.langchain4j.rag.retriever;
 
 import com.shuanglin.bot.config.DBMessageDTO;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -10,15 +12,14 @@ import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component("DBContentRetriever")
@@ -120,18 +121,9 @@ public class DBContentRetriever implements ContentRetriever {
 
 			// -------------------- 步骤 5: 将数据库结果转换为 LangChain4j 的 Content 格式 --------------------
 			log.info("[Step 5] Mapping {} DB documents to LangChain4j Content objects.", dbMessages.size());
-			List<Content> finalContentList = dbMessages.stream()
-					.map(document -> {
-						// 在这里，你可以从 document 构建非常丰富的元数据
-						String content = document.getContent();
-//						Metadata metadata = new Metadata()
-//								.put("memory_id", document.getMemoryId()) // 使用 DTO 的 getter 方法
-//								.put("user_id", document.getUserId())
-//								.put("group_id", document.getGroupId())
-//								.put("source_db", "MongoDB");
-						return Content.from(content);
-					})
-					.collect(Collectors.toList());
+			Map<String, String> map = new HashMap<>();
+			map.put("contentType", "knowledge");
+			List<Content> finalContentList = Collections.singletonList(Content.from(new TextSegment(dbMessages.stream().map(DBMessageDTO::getContent).collect(() -> new StringJoiner("\n"), StringJoiner::add, StringJoiner::merge).toString(), new Metadata(map))));
 
 			log.info("[Step 5] Mapping complete. Returning {} Content objects.", finalContentList.size());
 			log.info("==================== [END] Retrieval Process (Success) ====================");

@@ -39,6 +39,61 @@ public class AugmentConfig {
 				""");
 	}
 
+	@Bean("thinkPromptTemplate")
+	public PromptTemplate thinkPromptTemplate() {
+		return PromptTemplate.from("""
+				你是一个小说创作智能助手的“思考引擎”，负责分析用户意图并规划工具调用。
+				你拥有以下工具能力：
+				
+				{tool_descriptions}
+				
+				请严格分析用户请求，判断：
+				1. 用户真实意图是什么？（如：续写、查询事实、获取写作技巧、分析人物等）
+				2. 需要调用哪些工具？（从上述工具中选择，可多选）
+				3. 为每个工具生成具体的查询建议（query_hint）
+				4. 简要说明理由
+				
+				输出必须为严格 JSON 格式，包含以下字段：
+				{{
+				  "intent": "string",
+				  "required_tools": ["tool_name1", "tool_name2", ...],
+				  "tool_queries": {{
+				    "tool_name1": "query_hint_1",
+				    "tool_name2": "query_hint_2"
+				  }},
+				  "reason": "string"
+				}}
+				
+				当前对话历史（最近3轮）：
+				{chat_history}
+				
+				用户最新输入：
+				{user_input}
+				"""
+		);
+	}
+
+	@Bean("likePromptTemplate")
+	public PromptTemplate likePromptTemplate() {
+		return PromptTemplate.from("""
+				你是一个风格化响应引擎。请将以下“用户输入”按“风格范文”的语言风格重写，输出一段风格一致的新文本。
+				
+				【风格范文】
+				{style_examples}
+				
+				【用户输入】
+				{user_input}
+				
+				【重写规则】
+				1. 保持用户输入的核心意图（如是问题则回答，如是陈述则改写，如是主题则扩展）；
+				2. 语言风格必须与“风格范文”高度一致（句式、语气、节奏、用词）；
+				3. 严禁复制“风格范文”中的任何短语；
+				4. 输出必须流畅自然，符合目标风格。
+				
+				→ 请直接输出风格化结果，不要解释：
+				"""
+		);
+	}
 	@Bean("multiStepAugment")
 	public RetrievalAugmentor multiStepAugment(@Qualifier("multiStepQueryRetriever") ContentRetriever multiStepQueryRetriever,
 											   @Qualifier("multiStepContentInjector") ContentInjector multiStepContentInjector) {
