@@ -5,6 +5,7 @@ import dev.langchain4j.community.model.dashscope.QwenChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import jakarta.annotation.Resource;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -24,8 +25,8 @@ public class GraphService {
 	private static final String NEO4J_PASSWORD = "Sl123456";
 	private final Driver driver;
 
-	@Resource
-	private QwenChatModel qwenChatModel;
+	@Resource(name = "decomposeLanguageModel")
+	private OllamaChatModel decomposeLanguageModel;
 
 	public PromptTemplate graphPromptTemplate() {
 		return PromptTemplate.from("""
@@ -77,7 +78,7 @@ public class GraphService {
 						.replace("lastContext", parseResult.getContentList().get(i - 1))
 						.replace("indexText", parseResult.getContentList().get(i))
 						.replace("nextContext", parseResult.getContentList().get(i + 1));
-				String decomposeQuery = qwenChatModel.chat(replace);
+				String decomposeQuery = decomposeLanguageModel.chat(replace);
 				executeCypher(decomposeQuery);
 				System.out.println("decomposeQuery = " + decomposeQuery);
 			}
