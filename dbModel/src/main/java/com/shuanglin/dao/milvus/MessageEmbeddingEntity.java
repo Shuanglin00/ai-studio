@@ -16,7 +16,7 @@ import org.dromara.milvus.plus.annotation.MilvusIndex;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@MilvusCollection(name = "embedding_collection")
+@MilvusCollection(name = "chatEmbeddingCollection")
 public class MessageEmbeddingEntity {
 	@MilvusField(
 			name = "id", // 字段名称
@@ -28,14 +28,16 @@ public class MessageEmbeddingEntity {
 
 	@MilvusField(
 			name = "userId", // 字段名称
-			dataType = DataType.VarChar // 数据类型为64位整数
+			dataType = DataType.VarChar, // 数据类型为64位整数
+			nullable = true
 	)
 	@SerializedName(value = "userId", alternate = {"user_id"})
 	private String userId;
 
 	@MilvusField(
 			name = "groupId", // 字段名称
-			dataType = DataType.VarChar // 数据类型为64位整数
+			dataType = DataType.VarChar , // 数据类型为64位整数
+			nullable = true
 	)
 	@SerializedName(value = "groupId", alternate = {"group_id"})
 	private String groupId;
@@ -48,7 +50,8 @@ public class MessageEmbeddingEntity {
 
 	@MilvusField(
 			name = "modelName", // 字段名称
-			dataType = DataType.VarChar // 数据类型为64位整数
+			dataType = DataType.VarChar, // 数据类型为64位整数
+			nullable = true
 	)
 	private String modelName;
 
@@ -63,7 +66,7 @@ public class MessageEmbeddingEntity {
 	@MilvusField(
 			name = "embeddings", // 字段名称
 			dataType = DataType.FloatVector, // 数据类型为浮点型向量
-			dimension = 128 // 向量维度，假设人脸特征向量的维度是128
+			dimension = 1536 // 向量维度，假设人脸特征向量的维度是128
 	)
 	private float[] embeddings;
 	@MilvusField(
