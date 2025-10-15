@@ -39,7 +39,7 @@ public class ApiModelsConfiguration {
 				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
 				.logRequests(true)
 				.logResponses(true)
-				.modelName("gemma3:1b")
+				.modelName("gemma3:12b")
 				.build();
 	}
 

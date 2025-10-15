@@ -52,9 +52,9 @@ milvus:
   uri: http://8.138.204.38:19530
   enable: true
   open-log: true
-  db-name: chatEmbeddingDB6
+  db-name: chatDB
   packages:
     - com.shuanglin.dao.milvus
   top-k: 5
   defaultDatabaseName: chatDB
-  defaultCollectionName: chatEmbeddingDB6
+  defaultCollectionName: chatEmbeddingCollection

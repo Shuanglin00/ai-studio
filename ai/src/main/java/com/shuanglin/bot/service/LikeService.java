@@ -67,7 +67,7 @@ public class LikeService {
 
 	public String chat(String question) {
 		List<Float> floats = embeddingModel.embed(question).content().vectorAsList();
-		List<MilvusResult<MessageEmbeddingEntity>> data = messageEmbeddingMapper.queryWrapper().vector(floats).topK(5).query().getData();
+		List<MilvusResult<MessageEmbeddingEntity>> d	ata = messageEmbeddingMapper.queryWrapper().vector(floats).topK(5).query().getData();
 		List<String> storeIds = data.stream().map(match -> match.getEntity().getStoreId()).toList();
 		List<MessageStoreEntity> messageStoreEntities = messageStoreEntityRepository.findAllById(storeIds);
 		String examples = messageStoreEntities.stream().map(MessageStoreEntity::getContent).collect(Collectors.joining("\n"));
