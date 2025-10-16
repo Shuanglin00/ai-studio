@@ -35,47 +35,53 @@ public class GraphService {
 	 * - System Prompt: 定义本体论框架、通用规则、领域实体设计规范（权威来源）
 	 * - User Prompt: 提供任务上下文、具体操作指南、示例演示（引用应用）
 	 * 
-	 * 版本: v2.0-domain-unified
+	 * 版本: v3.0-chapter-level
 	 * 配套System Prompt: kgKnowlage.md 第6.5节 - 领域实体设计规范
 	 */
 	public PromptTemplate graphPromptTemplate() {
 		return PromptTemplate.from("""
-				/**
-				 * 小说知识图谱增量构建任务 - User Prompt
-				 * 版本: v2.0-domain-unified
-				 * 配套System Prompt: kgKnowlage.md (完整文档已作为system message传递)
-				 * 
-				 * 重要声明: 本指令与 System Prompt 协同工作，不是替换关系。
-				 * System Prompt 提供本体论框架和规范，本指令提供任务上下文和操作指南。
-				 */
+				## 当前任务
+				请基于SystemPrompt中定义的强制性约束规则，处理以下输入：
 				
-				你是高度专业化的知识图谱构建AI，擅长从大规模小说文本中进行信息抽取和结构化建模。
-				你的任务是将章节内容精确、高效地转换为Neo4j Cypher语句，用于构建或扩展小说世界知识图谱。
+				【章节信息】
+				- 章节标题：{{chapterTitle}}
+				- 章节索引：{{chapterIndex}}
+				- 基准时间戳：{{baseTimestamp}}
 				
-				**上下文信息 (Context):**
-				你将接收到以下三部分文本，这是你分析的全部依据：
-				-   `lastContext`: 前一章节的全部内容。用于**实体识别的一致性**、**关系回溯**和**状态变迁的验证**。
-				    你需要利用它来理解已知角色的背景和现有关系，但**不应**从中提取新的信息来生成Cypher。
-				-   `indexText`: 当前需要处理的完整章节内容。这是你本次任务的**核心工作区**。
-				    你必须通读并理解本章节的全部情节，并从中提取所有新增的、变化的实体、关系和属性。
-				-   `nextContext`: 下一章节的全部内容。用于**预判和理解提供线索**，帮助消除歧义。
-				    但同样**不应**从中提取新的信息来生成Cypher。
+				【文本内容】
+				lastContext（前一章节/完整内容）：
+				{{lastContext}}
 				
-				**核心任务 (Core Mission):**
-				你的使命是"增量更新"知识图谱。基于`lastContext`和`nextContext`提供的上下文，
-				对`indexText`(当前章节)进行一次全面的信息抽取，并生成一系列Cypher语句来反映**本章节带来的所有新变化**。
+				作用：确认实体一致性、推断前置状态，**不提取新信息**
 				
-				**必须严格遵循System Prompt (kgKnowlage.md) 第6.5节定义的领域实体设计规范**
+				---
 				
-				**生成要求:**
-				1. 纯Cypher输出，禁止Markdown/注释/自然语言
-				2. 使用MERGE保证幂等性
-				3. 节点标签使用双标签：[:Entity:Character], [:Event:StoryEvent]
-				4. 易变属性必须通过:State节点管理
-				5. 状态变迁遵循System Prompt第6.3节原子化模板
-				6. 如无新信息，返回空字符串
+				indexText（当前章节/完整内容）：
+				{{indexText}}
 				
-				请处理用户提供的章节内容。
+				作用：**唯一的信息提取来源**，所有Cypher必须基于此生成
+				
+				---
+				
+				nextContext（下一章节/完整内容）：
+				{{nextContext}}
+				
+				作用：消除歧义、理解语境，**不生成Cypher**
+				
+				【关键约束】
+				- Event.timestamp 必须使用：datetime('{{baseTimestamp}}')
+				- Event.source 格式：第{{chapterIndex}}章 {{chapterTitle}}
+				- Event.paragraphIndex 设为 null
+				- Event.chapterIndex 设为 {{chapterIndex}}
+				
+				请严格遵循SystemPrompt的RULE-1至RULE-6 (kgKnowlage.md)，生成符合规范的Cypher语句。
+				
+				**输出规范：**
+				1. 直接输出Cypher语句，禁止Markdown代码块包裹
+				2. 禁止输出任何自然语言解释
+				3. 如indexText无新信息，必须返回空字符串
+				4. 使用MERGE保证幂等性，避免重复创建
+				5. 节点标签使用双标签：[:Entity:Character], [:Event:StoryEvent]
 				"""
 		);
 	}
@@ -84,23 +90,146 @@ public class GraphService {
 		this.driver = GraphDatabase.driver(NEO4J_URI, AuthTokens.basic(NEO4J_USER, NEO4J_PASSWORD));
 	}
 
+	/**
+	 * 章节级小说知识图谱构建
+	 * 以完整章节为处理单位，每章调用1次LLM
+	 */
 	public void readStory(String path) {
 		File storyFile = new File(path);
 		List<FileReadUtil.ParseResult> parseResults = FileReadUtil.readEpubFile(storyFile);
-		big:for (FileReadUtil.ParseResult parseResult : parseResults) {
-			inner:for (int i = 1; i < parseResult.getContentList().size() - 2; i++) {
-				Map<String, String> map = new HashMap<>();
-				map.put("lastContext", parseResult.getContentList().get(i - 1));
-				map.put("indexText", parseResult.getContentList().get(i));
-				map.put("nextContext", parseResult.getContentList().get(i + 1));
-				String replace = graphPromptTemplate().template()
-						.replace("lastContext", parseResult.getContentList().get(i - 1))
-						.replace("indexText", parseResult.getContentList().get(i))
-						.replace("nextContext", parseResult.getContentList().get(i + 1));
-				String decomposeQuery = decomposeLanguageModel.chat(replace);
-				executeCypher(decomposeQuery);
-				System.out.println("decomposeQuery = " + decomposeQuery);
+		
+		// 遍历每个章节（章节级循环）
+		for (int chapterIdx = 0; chapterIdx < parseResults.size(); chapterIdx++) {
+			FileReadUtil.ParseResult currentChapter = parseResults.get(chapterIdx);
+			
+			// 聚合段落为完整章节文本
+			String lastChapterText = chapterIdx > 0 
+					? aggregateParagraphs(parseResults.get(chapterIdx - 1).getContentList()) 
+					: "";
+			String currentChapterText = aggregateParagraphs(currentChapter.getContentList());
+			String nextChapterText = chapterIdx < parseResults.size() - 1 
+					? aggregateParagraphs(parseResults.get(chapterIdx + 1).getContentList()) 
+					: "";
+			
+			// 构造章节元数据
+			String chapterTitle = currentChapter.getTitle();
+			int chapterIndex = chapterIdx + 1; // 从1开始
+			String baseTimestamp = calculateTimestamp(chapterIndex);
+			
+			// 构造Prompt变量
+			Map<String, Object> variables = new HashMap<>();
+			variables.put("lastContext", lastChapterText);
+			variables.put("indexText", currentChapterText);
+			variables.put("nextContext", nextChapterText);
+			variables.put("chapterTitle", chapterTitle);
+			variables.put("chapterIndex", chapterIndex);
+			variables.put("baseTimestamp", baseTimestamp);
+			
+			// 调用LLM生成Cypher
+			Prompt prompt = graphPromptTemplate().apply(variables);
+			String cypher = decomposeLanguageModel.chat(prompt.text());
+			
+			// 验证并执行Cypher
+			if (validate(cypher)) {
+				executeBatchCypher(cypher);
+				System.out.println("✅ 已处理章节 " + chapterIndex + "/" + parseResults.size() + ": " + chapterTitle);
+			} else {
+				System.err.println("⚠️  章节 " + chapterIndex + " 验证失败，跳过执行");
 			}
+		}
+		
+		System.out.println("\n📊 知识图谱构建完成！共处理 " + parseResults.size() + " 个章节");
+	}
+	
+	/**
+	 * 聚合段落列表为完整章节文本
+	 * @param contentList 章节的段落列表
+	 * @return 聚合后的完整文本
+	 */
+	private String aggregateParagraphs(List<String> contentList) {
+		if (contentList == null || contentList.isEmpty()) {
+			return "";
+		}
+		
+		return contentList.stream()
+				.filter(paragraph -> paragraph != null && !paragraph.trim().isEmpty())
+				.reduce((p1, p2) -> p1 + "\n" + p2)
+				.orElse("");
+	}
+	
+	/**
+	 * 计算章节的基准时间戳（日期级精度）
+	 * @param chapterIndex 章节索引（从1开始）
+	 * @return ISO 8601格式的时间戳字符串
+	 */
+	private String calculateTimestamp(int chapterIndex) {
+		// 基准日期：2025-01-01
+		// 公式：baseDate + (chapterIndex * 1天)
+		return String.format("2025-01-%02dT00:00:00", chapterIndex);
+	}
+	
+	/**
+	 * 验证Cypher语句的本体约束
+	 * @param cypher Cypher语句
+	 * @return 是否通过验证
+	 */
+	private boolean validate(String cypher) {
+		if (cypher == null || cypher.trim().isEmpty()) {
+			return false; // 空语句跳过
+		}
+		
+		// 验证Event.paragraphIndex为null（章节级处理不使用paragraphIndex）
+		if (cypher.contains("paragraphIndex:") && !cypher.contains("paragraphIndex: null")) {
+			System.err.println("⚠️  验证失败：Event.paragraphIndex必须设为null（章节级处理）");
+			return false;
+		}
+		
+		// 验证timestamp格式为YYYY-MM-DDT00:00:00（日期级精度）
+		if (cypher.contains("timestamp:") && !cypher.matches(".*datetime\\('\\d{4}-\\d{2}-\\d{2}T00:00:00'\\).*")) {
+			System.err.println("⚠️  验证失败：timestamp格式必须为YYYY-MM-DDT00:00:00");
+			// 警告但不阻断执行（容错处理）
+		}
+		
+		// 验证source格式为"第X章 章节名"（移除段落标记）
+		if (cypher.contains("source:") && cypher.contains(" - P")) {
+			System.err.println("⚠️  验证警告：source格式应为'第X章 章节名'，不应包含段落标记");
+			// 警告但不阻断执行
+		}
+		
+		return true; // 通过验证
+	}
+	
+	/**
+	 * 批量执行Cypher语句，支持事务和回滚
+	 * @param cypher Cypher语句
+	 */
+	private void executeBatchCypher(String cypher) {
+		try (Session session = driver.session()) {
+			// 分离多条CREATE/MERGE语句（简单处理）
+			String[] statements = cypher.split(";\\s*(?=CREATE|MERGE|MATCH)");
+			
+			// 开启事务
+			session.writeTransaction(tx -> {
+				for (String statement : statements) {
+					if (statement != null && !statement.trim().isEmpty()) {
+						try {
+							tx.run(statement.trim());
+						} catch (Exception e) {
+							System.err.println("❌ 单条语句执行失败：" + statement.trim());
+							e.printStackTrace();
+							throw e; // 抛出异常触发事务回滚
+						}
+					}
+				}
+				return null;
+			});
+			
+			System.out.println("✅ 批量执行成功，共 " + statements.length + " 条语句");
+			
+		} catch (Exception e) {
+			System.err.println("❌ 批量Cypher执行失败，事务已回滚");
+			System.err.println("原始语句：" + cypher.substring(0, Math.min(cypher.length(), 200)) + "...");
+			e.printStackTrace();
 		}
 	}
 

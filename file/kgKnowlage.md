@@ -46,19 +46,27 @@
    - `uuid`: String - 全局唯一标识符
    - `timestamp`: DateTime - 事件发生的精确时间
    - `eventType`: String - 事件类型(如 "Generation", "Transformation", "Termination", "Observation")
-   - `source`: String - 数据来源
+   - `source`: String - 数据来源(格式: "第X章 章节名 - PY")
    - `confidence`: Float - 置信度(0.0-1.0)
+   - `description`: String - 事件业务描述
+   - `chapterIndex`: Integer - 章节索引(从1开始)
+   - `paragraphIndex`: Integer - 段落索引(从1开始)
 
 2. **Entity节点:** 使用标签 `:Entity`,必须包含属性:
    - `uuid`: String - 全局唯一标识符
-   - `entityType`: String - 实体类型(如 "Person", "Document", "Organization")
+   - `entityType`: String - 实体类型(如 "Character", "Location", "Item", "Skill", "Organization")
    - `createdAt`: DateTime - 实体创建时间
+   - `name`: String - 实体名称(必须为中文)
+   - `firstMentionChapter`: Integer - 首次出现章节
+   - `firstMentionSource`: String - 首次出现位置
 
 3. **State节点:** 使用标签 `:State`,必须包含属性:
    - `uuid`: String - 状态唯一标识符
-   - `valid_from_timestamp`: DateTime - 状态生效开始时间
-   - `valid_to_timestamp`: DateTime - 状态生效结束时间(当前状态可为null)
-   - 其他业务属性(如 `status`, `value` 等)
+   - `valid_from_timestamp`: DateTime - 状态生效开始时间(必须等于创建它的Event.timestamp)
+   - `valid_to_timestamp`: DateTime - 状态生效结束时间(当前活跃状态必须为null)
+   - `stateType`: String - 状态类型(如 "境界状态", "技能状态", "关系状态", "地理状态", "持有状态")
+   - `stateValue`: String - 状态具体值(必须为中文)
+   - 其他业务属性(根据stateType定义)
 
 #### **6.2 关系类型定义**
 
@@ -91,6 +99,10 @@
 8. **CREATES_STATE:** Event -[:CREATES_STATE]-> State
    - 描述：表示事件创建了新状态。
    - 属性: `timestamp`: DateTime
+
+9. **NEXT_STATE:** State -[:NEXT_STATE]-> State
+   - 描述：连接状态版本链，指向该状态的下一个版本。
+   - 属性: `transition_event_uuid`: String - 触发转换的事件UUID
 
 #### **6.3 Cypher语句生成提示词**
 
@@ -139,6 +151,11 @@
    - 所有timestamp必须使用DateTime类型
    - Event的timestamp一旦设置不可修改
    - State的valid_from_timestamp和valid_to_timestamp必须形成合法的时间区间
+   - **小说场景时间戳生成策略:**
+     * 基准日期: 2025-01-01
+     * 章节时间偏移: baseDate + (chapterIndex × 1天)
+     * 段落时间偏移: 章节基准时间 + (paragraphIndex × 1分钟)
+     * 示例: 第5章第30段 → 2025-01-06T00:30:00
 
 3. **维护状态版本链:**
    - 当创建新状态时,必须:
@@ -150,6 +167,12 @@
    - 如果事件有状态依赖,必须创建REQUIRES_STATE关系
    - 需验证前置状态在事件时间点是否有效(valid_from <= event.timestamp < valid_to)
 
+5. **信息提取边界约束(小说场景专用):**
+   - **唯一信息来源:** 所有Entity、Event、State必须且只能从indexText(当前行)提取
+   - **禁止从前文提取:** lastContext(前文)仅用于确认实体名称一致性、推断前置状态
+   - **禁止从后文生成:** nextContext(后文)仅用于消除代词歧义、理解上下文语境
+   - **空输出规则:** 如果indexText无可提取的新信息,必须返回空字符串
+
 **生成模板示例:**
 
 **场景1: 创建新实体及初始状态**
@@ -159,9 +182,11 @@ CREATE (e:Event {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-14T10:00:00'),
   eventType: 'Generation',
-  source: 'user_input',
+  source: '第1章 落魄天才 - P1',
   confidence: 1.0,
-  description: '创建论文实体'
+  description: '创建论文实体',
+  chapterIndex: 1,
+  paragraphIndex: 1
 })
 
 // 2. 创建实体
@@ -169,7 +194,9 @@ CREATE (entity:Entity {
   uuid: randomUUID(),
   entityType: 'Paper',
   createdAt: datetime('2025-10-14T10:00:00'),
-  title: '知识图谱研究'
+  name: '知识图谱研究',
+  firstMentionChapter: 1,
+  firstMentionSource: '第1章 落魄天才 - P1'
 })
 
 // 3. 创建初始状态
@@ -177,7 +204,8 @@ CREATE (s:State {
   uuid: randomUUID(),
   valid_from_timestamp: datetime('2025-10-14T10:00:00'),
   valid_to_timestamp: null,
-  status: 'draft',
+  stateType: 'status',
+  stateValue: 'draft',
   version: 1
 })
 
@@ -264,11 +292,21 @@ RETURN e, r, affected, newState
 
 在生成Cypher语句前,必须验证:
 
+**通用验证规则:**
 1. **UUID唯一性:** 所有新创建的节点必须生成唯一UUID
 2. **时间一致性:** Event.timestamp <= State.valid_from_timestamp
 3. **状态链完整性:** 同一实体的状态不能有时间重叠
 4. **前置条件满足:** 执行TRANSFORM/TERMINATE前必须验证前置状态存在且有效
 5. **关系完整性:** 每个State必须关联到至少一个Entity和一个创建它的Event
+
+**小说场景专用验证规则:**
+6. **Event属性完整性:** Event节点必须包含chapterIndex、paragraphIndex、description、source属性
+7. **Entity属性完整性:** Entity节点必须包含name、firstMentionChapter、firstMentionSource属性
+8. **State属性规范:** State节点必须包含stateType和stateValue属性（中文值）
+9. **时间戳格式验证:** timestamp必须使用datetime('{{baseTimestamp}}')格式，不可自定义
+10. **信息来源验证:** 所有新节点必须来自indexText，不能来自lastContext或nextContext
+11. **空输出验证:** 如果indexText无新信息，必须返回空字符串而非文字说明
+12. **属性命名规范:** 所有属性键名和值（业务相关）必须使用中文
 
 #### 6.5 领域实体设计规范 (Domain Entity Design Specification)
 
@@ -290,8 +328,12 @@ RETURN e, r, affected, newState
 - 别名: List<String> - 所有别名、称号、化名（可选）
 - entityType: String - 固定值 "Character"
 - createdAt: DateTime - 实体创建时间
+- firstMentionChapter: Integer - 首次出现章节
+- firstMentionSource: String - 首次出现位置
 
 // 易变属性(通过State节点管理):
+- stateType: "境界状态" | "技能状态" | "关系状态" | "地理状态" | "持有状态"
+- stateValue: String - 状态具体值
 - 境界: String - 当前修炼境界（如"斗者"、"斗师"）
 - 称号: String - 当前主要称号
 - 状态描述: String - 身体状态、情绪状态等
@@ -305,8 +347,12 @@ RETURN e, r, affected, newState
 - name: String - 地点名称
 - entityType: String - 固定值 "Location"
 - createdAt: DateTime
+- firstMentionChapter: Integer - 首次出现章节
+- firstMentionSource: String - 首次出现位置
 
 // 易变属性(通过State节点管理):
+- stateType: "地理状态"
+- stateValue: String - 地点描述
 - 控制者: String - 当前控制该地点的势力或角色
 - 地理特征: String - 描述性信息
 
@@ -323,8 +369,12 @@ RETURN e, r, affected, newState
 - type: String - 组织类型（"家族"、"宗门"、"帝国"等）
 - entityType: String - 固定值 "Organization"
 - createdAt: DateTime
+- firstMentionChapter: Integer - 首次出现章节
+- firstMentionSource: String - 首次出现位置
 
 // 易变属性(通过State节点管理):
+- stateType: "组织状态"
+- stateValue: String - 状态描述
 - 势力等级: String
 - 领导者: String
 ```
@@ -338,8 +388,12 @@ RETURN e, r, affected, newState
 - 类型: String - "武器"、"丹药"、"功法"等
 - entityType: String - 固定值 "Item"
 - createdAt: DateTime
+- firstMentionChapter: Integer - 首次出现章节
+- firstMentionSource: String - 首次出现位置
 
 // 易变属性(通过State节点管理):
+- stateType: "持有状态"
+- stateValue: String - 状态描述
 - 拥有者: String - 当前持有者
 - 品质: String
 ```
@@ -354,6 +408,12 @@ RETURN e, r, affected, newState
 - 品阶: String - 天阶、地阶等（通常恒定）
 - entityType: String - 固定值 "Skill"
 - createdAt: DateTime
+- firstMentionChapter: Integer - 首次出现章节
+- firstMentionSource: String - 首次出现位置
+
+// 易变属性(通过State节点管理):
+- stateType: "技能状态"
+- stateValue: String - 熔练度等
 ```
 
 **6. StoryEvent (情节事件)**
@@ -361,9 +421,16 @@ RETURN e, r, affected, newState
 // 节点标签: [:Event:StoryEvent]
 // 注意: StoryEvent是Event的特化，继承所有Event属性
 // 额外属性:
-- 章节: String - 所属章节
-- 情节重要度: Integer - 1-10评分
-- eventType: String - 可为 "Plot" 等领域特定类型
+- uuid: String - 全局唯一标识符
+- timestamp: DateTime - 事件发生时间
+- eventType: String - 可为 "Generation" | "Transformation" | "Observation" | "Termination"
+- source: String - 数据来源(格式: "第X章 章节名 - PY")
+- confidence: Float - 置信度
+- description: String - 事件描述
+- chapterIndex: Integer - 章节索引
+- paragraphIndex: Integer - 段落索引
+- 章节: String - 所属章节(可选)
+- 情节重要度: Integer - 1-10评分(可选)
 ```
 
 ##### 6.5.2 领域关系类型扩展
@@ -414,10 +481,12 @@ CREATE (e:Event:StoryEvent {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-15T10:00:00'),
   eventType: 'Generation',
-  source: 'chapter_1',
+  source: '第一章 落魄天才 - P1',
   confidence: 1.0,
-  章节: '第一章',
-  description: '角色首次登场'
+  description: '角色首次登场',
+  chapterIndex: 1,
+  paragraphIndex: 1,
+  章节: '第一章'
 })
 
 // 2. 创建角色实体（双标签）
@@ -426,7 +495,9 @@ CREATE (c:Entity:Character {
   entityType: 'Character',
   name: '萧炎',
   别名: ['岩枭'],
-  createdAt: datetime('2025-10-15T10:00:00')
+  createdAt: datetime('2025-10-15T10:00:00'),
+  firstMentionChapter: 1,
+  firstMentionSource: '第一章 落魄天才 - P1'
 })
 
 // 3. 创建初始状态
@@ -434,6 +505,8 @@ CREATE (s:State {
   uuid: randomUUID(),
   valid_from_timestamp: datetime('2025-10-15T10:00:00'),
   valid_to_timestamp: null,
+  stateType: '境界状态',
+  stateValue: '斗之气三段',
   境界: '斗之气三段',
   称号: '废物',
   状态描述: '健康'
@@ -460,15 +533,19 @@ WITH entity, rel, currentState,
        uuid: randomUUID(),
        timestamp: datetime($event_timestamp),
        eventType: 'Transformation',
-       source: 'chapter_5',
+       source: '第五章 突破 - P30',
        confidence: 1.0,
-       章节: '第五章',
-       description: '境界突破'
+       description: '境界突破',
+       chapterIndex: 5,
+       paragraphIndex: 30,
+       章节: '第五章'
      } AS eventProps,
      {
        uuid: randomUUID(),
        valid_from_timestamp: datetime($event_timestamp),
        valid_to_timestamp: null,
+       stateType: '境界状态',
+       stateValue: '斗者',
        境界: '斗者',
        称号: '天才',
        状态描述: '精力充沛'
@@ -499,10 +576,12 @@ CREATE (e:Event:StoryEvent {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-15T14:00:00'),
   eventType: 'Observation',
-  source: 'chapter_3',
+  source: '第三章 会面 - P15',
   confidence: 1.0,
-  章节: '第三章',
-  description: '萧炎与纳兰嫣然会面'
+  description: '萧炎与纳兰嫣然会面',
+  chapterIndex: 3,
+  paragraphIndex: 15,
+  章节: '第三章'
 })
 
 // 3. 建立参与关系
@@ -520,16 +599,41 @@ CREATE (e)-[:OBSERVES]->(c2)
 
 在6.4节通用验证规则基础上，补充以下领域规则：
 
+**实体层验证:**
 1. **角色命名唯一性:** 同一个`name`的`:Character`实体在图中必须唯一（通过MERGE保证）
-2. **境界演化单向性:** 角色的`境界`属性变化必须符合预定义的境界体系顺序
-3. **地点包含非循环性:** `:CONTAINS`关系不能形成环路
-4. **组织从属唯一性:** 一个角色在同一时间只能`:BELONGS_TO`一个组织（通过State管理）
-5. **事件参与者完整性:** 所有`:StoryEvent`必须至少有一个`:PARTICIPATED_IN`关系
+2. **地点包含非循环性:** `:CONTAINS`关系不能形成环路
+3. **组织从属唯一性:** 一个角色在同一时间只能`:BELONGS_TO`一个组织（通过State管理）
+
+**状态层验证:**
+4. **境界演化单向性:** 角色的`境界`属性变化必须符合预定义的境界体系顺序（可选）
+5. **stateType枚举约束:** State.stateType必须为以下枚举值之一：
+   - "境界状态" - 用于角色修炼等级
+   - "技能状态" - 用于技能掌握情况
+   - "关系状态" - 用于角色间关系
+   - "地理状态" - 用于位置信息
+   - "持有状态" - 用于物品拥有
+   - "组织状态" - 用于组织信息
+6. **状态值必须中文:** State.stateValue必须为中文字符串，不允许纯英文或数字
+
+**事件层验证:**
+7. **事件参与者完整性:** 所有`:StoryEvent`必须至少有一个`:PARTICIPATED_IN`关系或直接的GENERATES/TRANSFORMS/OBSERVES/TERMINATES关系
+8. **source格式验证:** Event.source必须符合格式"第X章 章节名 - PY"（X和Y为数字）
+9. **chapterIndex与paragraphIndex范围:** 必须为正整数，且chapterIndex >= 1, paragraphIndex >= 1
+10. **timestamp与chapterIndex一致性:** Event.timestamp的日期部分必须等于 (baseDate + chapterIndex天)
+
+**关系层验证:**
+11. **禁止直接持有关系:** 不允许直接创建 (Character)-[:POSSESSES]->(Item)，必须通过Item的State节点记录拥有者
+12. **行为关系中介化:** 不允许直接创建 (Character)-[:ATTACKS]->(Character)，必须通过Event节点中介
+
+**输出格式验证:**
+13. **禁止非空非代码输出:** 输出必须为空字符串或符合规范的Cypher语句，不允许返回任何解释性文字
+14. **禁止markdown代码块:** 不允许使用```cypher```包裹Cypher语句，必须直接输出Cypher文本
 
 ##### 6.5.5 统一代码版本声明与Prompt协作机制
 
-**版本号:** v2.0-domain-unified  
-**最后更新:** 2025-10-15  
+**版本号:** v3.0-novel-enhanced  
+**最后更新:** 2025-10-16  
+**更新内容:** 增强小说场景专用属性、三元组上下文处理、信息提取边界约束、时间戳生成策略  
 
 **Prompt协作架构说明:**
 
@@ -694,6 +798,74 @@ AI应:
 4. 按照上述模板生成完整的Cypher语句
 5. 添加必要的注释说明每步操作的语义
 6. 验证生成的语句是否符合本体论框架的所有约束
+
+**场景C: 小说段落分析（三元组上下文处理）**
+
+当用户提供包含三元组上下文的小说段落时（lastContext、indexText、nextContext），AI应严格遵循以下规则：
+
+**信息提取边界约束：**
+
+1. **唯一信息源原则：**
+   - **所有新的Entity、Event、State必须且只能从indexText（当前行）提取**
+   - 禁止从lastContext（前文/上一段）提取任何新实体或事件
+   - 禁止从nextContext（后文/下一段）生成任何Cypher语句
+
+2. **上下文作用域限定：**
+   
+   **lastContext（前文）的唯一作用：**
+   - 确认实体名称一致性（避免同一角色不同别名被识别为多个实体）
+   - 推断前置状态（用于WHERE子句验证状态转换的前置条件）
+   - 示例：如果lastContext提到"萧炎苦修三年，始终停留在三段斗之气"，仅用于推断当前状态为"三段斗之气"，不从中提取新信息
+
+   **nextContext（后文）的唯一作用：**
+   - 消除代词歧义（如"他"指代哪个角色）
+   - 理解上下文语境（辅助判断事件类型和语义）
+   - 示例：如果nextContext提到"云岚宗弟子们露出震惊之色"，仅用于理解当前事件的重要性，不生成关于"云岚宗弟子"的实体
+
+3. **空输出规则：**
+   - 如果indexText没有明确的新实体、事件或状态信息，**必须返回空字符串**
+   - 禁止返回"无法生成"、"无信息"等文字说明
+   - 示例：indexText为"天色渐暗。"时，应返回空字符串
+
+4. **时间戳注入规则：**
+   - 所有Event.timestamp必须使用提供的{{baseTimestamp}}
+   - 禁止自定义或修改时间戳
+   - timestamp格式必须为ISO 8601标准：datetime('YYYY-MM-DDTHH:MM:SS')
+   - baseTimestamp由系统根据chapterIndex和paragraphIndex自动计算
+
+**处理示例：**
+
+输入上下文：
+```
+lastContext（前文）："萧炎苦修三年，始终停留在三段斗之气。"
+indexText（当前行）："萧炎终于突破至四段斗之气。"
+nextContext（后文）："云岚宗弟子们露出震惊之色。"
+baseTimestamp: 2025-01-06T00:30:00
+chapterIndex: 5
+paragraphIndex: 30
+```
+
+正确的处理流程：
+1. **从lastContext推断前置状态：** "三段斗之气"
+2. **从indexText提取信息：**
+   - Entity: 角色"萧炎"（已存在）
+   - Event: Transformation（突破事件）
+   - State: 境界状态"四段斗之气"（新状态）
+3. **nextContext的作用：** 确认事件重要性，但不生成关于"云岚宗弟子"的任何节点
+4. **生成Cypher：** 参考模板2（状态转换场景），使用baseTimestamp=2025-01-06T00:30:00
+
+错误示例（禁止）：
+- ❌ 从lastContext生成"萧炎苦修三年"的事件
+- ❌ 从nextContext生成"云岚宗弟子"的实体
+- ❌ 自定义timestamp为当前系统时间
+- ❌ 返回"无新信息可提取"的文字说明
+
+正确示例：
+- ✅ 仅从indexText提取"萧炎突破至四段斗之气"
+- ✅ 使用lastContext确认前置状态为"三段斗之气"
+- ✅ 使用nextContext理解突破的重要性（可提升confidence值）
+- ✅ 使用提供的baseTimestamp生成Event.timestamp
+- ✅ 如果indexText无新信息，返回空字符串
 
 **示例工作流程:**
 
