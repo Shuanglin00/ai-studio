@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 @Component("multiStepQueryRetriever")
 @RequiredArgsConstructor
 public class MultiStepQueryRetriever implements ContentRetriever {
-	@Resource(name = "decomposeLanguageModel")
-	private OllamaChatModel decomposeLanguageModel;
+	@Resource
+	private DecomposeAssistant decomposeAssistant;
 
 	private final MilvusClientV2 milvusClientV2;
 
@@ -62,8 +62,7 @@ public class MultiStepQueryRetriever implements ContentRetriever {
 		log.info("[步骤 1] 接收到原始复杂查询: {}", originalQuery);
 
 		// 步骤 2: 分解查询
-		DecomposeAssistant assistant = AiServices.builder(DecomposeAssistant.class).chatModel(decomposeLanguageModel).build();
-		String decomposeQuery = assistant.decompose(query.text());
+		String decomposeQuery = decomposeAssistant.decompose(query.text());
 
 		log.info("[步骤 2] LLM已将查询分解为以下子问题:");
 		List<TextSegment> subQueries = Arrays.stream(decomposeQuery.split("\n")).toList().stream().map(TextSegment::from).toList();

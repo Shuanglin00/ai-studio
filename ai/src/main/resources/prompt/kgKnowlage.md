@@ -172,6 +172,13 @@
    - **禁止从后文生成:** nextContext(下一章完整内容)仅用于消除代词歧义、理解上下文语境
    - **空输出规则:** 如果indexText无可提取的新信息,必须返回空字符串
 
+6. **Cypher变量引用规则:**
+   - **一次声明:** 变量只能在一个语句中声明一次（通过MERGE或CREATE）
+   - **禁止重复声明:** 已声明的变量不能再次添加标签或属性
+   - ❌ 错误示例: `MERGE (c1:Character {...}) ... MERGE (e)-[:MENTIONS]->(c1 {name: "xxx"})` 
+   - ✅ 正确示例: `MERGE (c1:Character {...}) ... MERGE (e)-[:MENTIONS]->(c1)`
+   - **规则说明:** 在创建关系时，如果节点变量已经声明，直接引用变量名即可，不要再添加属性或标签
+
 **生成模板示例:**
 
 **场景1: 创建新实体及初始状态**
@@ -324,7 +331,7 @@ RETURN e, r, affected, newState
 **示例：**
 ```cypher
 // ✅ 正确 - 创建角色节点
-CREATE (c:Entity:Character {name: "萧炎", entityType: 'Character'})
+ CREATE (c:Entity:Character {name: "萧炎", entityType: 'Character'})
  
 // ❌ 错误 - 不要使用方括号！
 CREATE (c:[:Entity:Character] {name: "萧炎"})  // 这会导致语法错误！

@@ -1,5 +1,6 @@
 package com.shuanglin.bot.langchain4j.assistant;
 
+import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
@@ -8,6 +9,13 @@ public interface DecomposeAssistant {
 	@UserMessage("将以下问题分解为3个或更少的、更简单的子问题。只返回一个以；分号分隔的子问题列表，不要添加任何其他文本。问题：{{query}}")
 	String decompose(@V("query") String query);
 
+	/**
+	 * 通用知识图谱生成方法，使用 kgKnowlage.md 作为 System Prompt
+	 * @param userPrompt 用户提示词（任务上下文、操作指南、示例）- 已完成变量替换的完整文本
+	 * @return Cypher语句
+	 */
+	String generateCypher(String userPrompt);
+	
 	@UserMessage("""
 			你是一个知识图谱构建助手，专门用于将小说文本转换为 Neo4j Cypher 插入语句。
 			

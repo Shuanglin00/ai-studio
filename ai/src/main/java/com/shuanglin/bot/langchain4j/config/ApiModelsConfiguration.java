@@ -1,5 +1,6 @@
 package com.shuanglin.bot.langchain4j.config;
 
+import com.shuanglin.bot.langchain4j.assistant.DecomposeAssistant;
 import com.shuanglin.bot.langchain4j.assistant.GeminiAssistant;
 import com.shuanglin.bot.langchain4j.assistant.OllamaAssistant;
 import com.shuanglin.bot.langchain4j.store.FilterMemoryStore;
@@ -20,6 +21,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import jakarta.annotation.Resource;
+import org.springframework.core.io.ClassPathResource;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -37,10 +44,24 @@ public class ApiModelsConfiguration {
 		return OllamaChatModel.builder()
 				.baseUrl(ollamaProperties.getUrl())
 				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
-				.logRequests(true)
-				.logResponses(true)
+//				.logRequests(true)
+//				.logResponses(true)
 				.modelName("gemma3:12b")
 				.build();
+	}
+	
+	/**
+	 * 加载知识图谱系统提示词
+	 * @return kgKnowlage.md文件内容
+	 */
+	private String loadKgKnowlagePrompt() {
+		try {
+			// 从类路径加载资源文件
+			ClassPathResource resource = new ClassPathResource("prompt/kgKnowlage.md");
+			return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new RuntimeException("加载知识图谱提示词文件失败: prompt/kgKnowlage.md", e);
+		}
 	}
 
 	@Bean("chatLanguageModel")
@@ -105,6 +126,22 @@ public class ApiModelsConfiguration {
 				.topP(geminiProperties.getTopP())
 				.topK(geminiProperties.getTopK())
 				.listeners(chatModelListenerList)
+				.build();
+	}
+
+	/**
+	 * 创建 DecomposeAssistant Bean，使用 kgKnowlage.md 作为 system prompt
+	 * @param decomposeLanguageModel 分解任务使用的语言模型
+	 * @return DecomposeAssistant 实例
+	 */
+	@Bean
+	public DecomposeAssistant decomposeAssistant(@Qualifier("decomposeLanguageModel") OllamaChatModel decomposeLanguageModel) {
+		// 加载知识图谱系统提示词
+		String systemPrompt = loadKgKnowlagePrompt();
+		
+		return AiServices.builder(DecomposeAssistant.class)
+				.chatModel(decomposeLanguageModel)
+				.systemMessageProvider(chatMemoryId -> systemPrompt)
 				.build();
 	}
 

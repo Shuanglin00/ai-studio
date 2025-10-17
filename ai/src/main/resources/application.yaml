@@ -7,18 +7,16 @@ spring:
   main:
     allow-circular-references: true
   data:
-    #    redis:
-    #      database: 1
-    #      host:
-    #    mongodb:
-    #      uri: mongodb://:27017/chatDB
     redis:
       database: 1
       host: 8.138.204.38
     mongodb:
       host: 8.138.204.38
       port: 27017
-      database: chatDB
+      database: storeDB
+      username: root
+      password: example
+      authentication-database: admin
     milvus:
       url: ${milvus.url}
       host: ${milvus.host}
@@ -32,7 +30,7 @@ spring:
     uri: bolt://8.138.204.38:7687
     authentication:
       username: neo4j
-      password: Sl123456
+      password: password
 langchain4j:
   models:
     gemini:
@@ -52,9 +50,9 @@ milvus:
   uri: http://8.138.204.38:19530
   enable: true
   open-log: true
-  db-name: chatDB
+  db-name: ${milvus.defaultDatabaseName}
   packages:
     - com.shuanglin.dao.milvus
   top-k: 5
-  defaultDatabaseName: chatDB
-  defaultCollectionName: chatEmbeddingCollection
+  defaultDatabaseName: milvusDB
+  defaultCollectionName: novelCollection
