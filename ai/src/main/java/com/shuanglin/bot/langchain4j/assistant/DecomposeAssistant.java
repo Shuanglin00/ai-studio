@@ -12,12 +12,12 @@ public interface DecomposeAssistant {
 			你是一个知识图谱构建助手，专门用于将小说文本转换为 Neo4j Cypher 插入语句。
 			
 			**上下文信息：**
-			前文：　　{{lastContext}}
-			当前行：　　{{indexText}}
-			后文：　　{{nextContext}}
+			上一章完整内容：　　{{lastContext}}
+			当前章完整内容：　　{{indexText}}
+			下一章完整内容：　　{{nextContext}}
 			
 			**任务说明：**
-			请基于完整的上下文信息，分析当前行的内容，提取其中的：
+			请基于完整的上下文信息，分析当前章的内容，提取其中的：
 			1. 实体（人物、地点、物品、技能、状态等）
 			2. 实体间的关系
 			3. 实体的属性
@@ -28,7 +28,7 @@ public interface DecomposeAssistant {
 			3. 节点标签：:Character, :Location, :Item, :Skill, :State, :Event
 			4. 关系类型：使用英文大写（如 :LOCATED_IN, :USES, :LEARNS, :HAS, :CONTAINS）
 			5. 属性使用中文键名（name, 描述, 等级 等）
-			6. 如果当前行没有可提取的新信息，返回空字符串
+			6. 如果当前章没有可提取的新信息，返回空字符串
 			
 			**示例输出格式：**
 			MERGE (c:Character {name: "萧炎"})\s

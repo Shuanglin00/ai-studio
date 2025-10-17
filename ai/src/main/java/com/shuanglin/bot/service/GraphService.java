@@ -35,7 +35,7 @@ public class GraphService {
 	 * - System Prompt: 定义本体论框架、通用规则、领域实体设计规范（权威来源）
 	 * - User Prompt: 提供任务上下文、具体操作指南、示例演示（引用应用）
 	 * 
-	 * 版本: v3.0-chapter-level
+	 * 版本: v3.1-pure-chapter-context
 	 * 配套System Prompt: kgKnowlage.md 第6.5节 - 领域实体设计规范
 	 */
 	public PromptTemplate graphPromptTemplate() {
@@ -49,21 +49,21 @@ public class GraphService {
 				- 基准时间戳：{{baseTimestamp}}
 				
 				【文本内容】
-				lastContext（前一章节/完整内容）：
+				lastContext（上一章完整内容）：
 				{{lastContext}}
 				
 				作用：确认实体一致性、推断前置状态，**不提取新信息**
 				
 				---
 				
-				indexText（当前章节/完整内容）：
+				indexText（当前章完整内容）：
 				{{indexText}}
 				
 				作用：**唯一的信息提取来源**，所有Cypher必须基于此生成
 				
 				---
 				
-				nextContext（下一章节/完整内容）：
+				nextContext（下一章完整内容）：
 				{{nextContext}}
 				
 				作用：消除歧义、理解语境，**不生成Cypher**
@@ -71,7 +71,7 @@ public class GraphService {
 				【关键约束】
 				- Event.timestamp 必须使用：datetime('{{baseTimestamp}}')
 				- Event.source 格式：第{{chapterIndex}}章 {{chapterTitle}}
-				- Event.paragraphIndex 设为 null
+				- Event节点不包含paragraphIndex属性
 				- Event.chapterIndex 设为 {{chapterIndex}}
 				
 				请严格遵循SystemPrompt的RULE-1至RULE-6 (kgKnowlage.md)，生成符合规范的Cypher语句。
@@ -178,22 +178,22 @@ public class GraphService {
 			return false; // 空语句跳过
 		}
 		
-		// 验证Event.paragraphIndex为null（章节级处理不使用paragraphIndex）
-		if (cypher.contains("paragraphIndex:") && !cypher.contains("paragraphIndex: null")) {
-			System.err.println("⚠️  验证失败：Event.paragraphIndex必须设为null（章节级处理）");
+		// 验证Event节点不应包含paragraphIndex属性（章节级处理）
+		if (cypher.contains("paragraphIndex:")) {
+			System.err.println("⚠️  验证失败：Event节点不应包含paragraphIndex属性（章节级处理）");
 			return false;
 		}
 		
 		// 验证timestamp格式为YYYY-MM-DDT00:00:00（日期级精度）
 		if (cypher.contains("timestamp:") && !cypher.matches(".*datetime\\('\\d{4}-\\d{2}-\\d{2}T00:00:00'\\).*")) {
-			System.err.println("⚠️  验证失败：timestamp格式必须为YYYY-MM-DDT00:00:00");
+			System.err.println("⚠️  验证警告：timestamp格式应为YYYY-MM-DDT00:00:00（日期级精度）");
 			// 警告但不阻断执行（容错处理）
 		}
 		
 		// 验证source格式为"第X章 章节名"（移除段落标记）
 		if (cypher.contains("source:") && cypher.contains(" - P")) {
-			System.err.println("⚠️  验证警告：source格式应为'第X章 章节名'，不应包含段落标记");
-			// 警告但不阻断执行
+			System.err.println("⚠️  验证失败：source格式应为'第X章 章节名'，不应包含段落标记");
+			return false;
 		}
 		
 		return true; // 通过验证

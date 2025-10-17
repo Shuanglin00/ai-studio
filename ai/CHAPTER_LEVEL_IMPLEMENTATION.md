@@ -1,5 +1,16 @@
 # 小说知识图谱章节级处理实现说明
 
+## 版本信息
+
+**版本号:** v3.1-pure-chapter-context  
+**最后更新:** 2025-10-17  
+**变更摘要:**
+- 移除所有段落级上下文引用
+- 统一章节级术语体系
+- 简化时间戳生成策略（移除分钟级偏移）
+- 删除paragraphIndex相关验证
+- 明确上下文定义：lastContext/indexText/nextContext均为完整章节内容
+
 ## 实施概述
 
 本次实施基于 `enhance-task-design.md`（章节级读取版本）完成了小说知识图谱构建系统的章节级处理功能。
@@ -270,7 +281,7 @@ mvn test -Dtest=GraphServiceChapterLevelTest
 |--------|----------------|-----------------|---------|
 | timestamp | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DDT00:00:00 | 移除分钟精度，统一为日期 |
 | source | '第X章 章节名 - PY' | '第X章 章节名' | 移除段落标记（PY） |
-| paragraphIndex | Integer（必填） | Integer/null（可选） | 章节级设为null |
+| ~~paragraphIndex~~ | Integer（必填） | **删除** | 章节级不使用段落索引 |
 | chapterIndex | Integer（必填） | Integer（必填） | 保持不变 |
 
 ---
@@ -400,6 +411,15 @@ public class NovelKnowledgeGraphBuilder {
 ---
 
 ## 版本历史
+
+**版本历史**
+
+- **v3.1-pure-chapter-context** (2025-10-17)
+  - 移除所有段落级上下文引用
+  - 统一章节级术语体系
+  - 简化时间戳生成策略（移除分钟级偏移）
+  - 删除paragraphIndex相关验证
+  - 明确上下文定义：lastContext/indexText/nextContext均为完整章节内容
 
 - **v3.0-chapter-level** (2025-10-16)
   - 实现章节级处理流程

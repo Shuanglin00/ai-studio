@@ -44,13 +44,12 @@
 
 1. **Event节点:** 使用标签 `:Event`,必须包含属性:
    - `uuid`: String - 全局唯一标识符
-   - `timestamp`: DateTime - 事件发生的精确时间
+   - `timestamp`: DateTime - 事件发生的精确时间（章节级精度：YYYY-MM-DDT00:00:00）
    - `eventType`: String - 事件类型(如 "Generation", "Transformation", "Termination", "Observation")
-   - `source`: String - 数据来源(格式: "第X章 章节名 - PY")
+   - `source`: String - 数据来源(格式: "第X章 章节名")
    - `confidence`: Float - 置信度(0.0-1.0)
    - `description`: String - 事件业务描述
    - `chapterIndex`: Integer - 章节索引(从1开始)
-   - `paragraphIndex`: Integer - 段落索引(从1开始)
 
 2. **Entity节点:** 使用标签 `:Entity`,必须包含属性:
    - `uuid`: String - 全局唯一标识符
@@ -154,8 +153,8 @@
    - **小说场景时间戳生成策略:**
      * 基准日期: 2025-01-01
      * 章节时间偏移: baseDate + (chapterIndex × 1天)
-     * 段落时间偏移: 章节基准时间 + (paragraphIndex × 1分钟)
-     * 示例: 第5章第30段 → 2025-01-06T00:30:00
+     * 格式: YYYY-MM-DDT00:00:00
+     * 示例: 第5章 → 2025-01-05T00:00:00
 
 3. **维护状态版本链:**
    - 当创建新状态时,必须:
@@ -168,9 +167,9 @@
    - 需验证前置状态在事件时间点是否有效(valid_from <= event.timestamp < valid_to)
 
 5. **信息提取边界约束(小说场景专用):**
-   - **唯一信息来源:** 所有Entity、Event、State必须且只能从indexText(当前行)提取
-   - **禁止从前文提取:** lastContext(前文)仅用于确认实体名称一致性、推断前置状态
-   - **禁止从后文生成:** nextContext(后文)仅用于消除代词歧义、理解上下文语境
+   - **唯一信息来源:** 所有Entity、Event、State必须且只能从indexText(当前章完整内容)提取
+   - **禁止从前文提取:** lastContext(上一章完整内容)仅用于确认实体名称一致性、推断前置状态
+   - **禁止从后文生成:** nextContext(下一章完整内容)仅用于消除代词歧义、理解上下文语境
    - **空输出规则:** 如果indexText无可提取的新信息,必须返回空字符串
 
 **生成模板示例:**
@@ -182,11 +181,10 @@ CREATE (e:Event {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-14T10:00:00'),
   eventType: 'Generation',
-  source: '第1章 落魄天才 - P1',
+  source: '第1章 落魄天才',
   confidence: 1.0,
   description: '创建论文实体',
-  chapterIndex: 1,
-  paragraphIndex: 1
+  chapterIndex: 1
 })
 
 // 2. 创建实体
@@ -196,7 +194,7 @@ CREATE (entity:Entity {
   createdAt: datetime('2025-10-14T10:00:00'),
   name: '知识图谱研究',
   firstMentionChapter: 1,
-  firstMentionSource: '第1章 落魄天才 - P1'
+  firstMentionSource: '第1章 落魄天才'
 })
 
 // 3. 创建初始状态
@@ -300,10 +298,10 @@ RETURN e, r, affected, newState
 5. **关系完整性:** 每个State必须关联到至少一个Entity和一个创建它的Event
 
 **小说场景专用验证规则:**
-6. **Event属性完整性:** Event节点必须包含chapterIndex、paragraphIndex、description、source属性
+6. **Event属性完整性:** Event节点必须包含chapterIndex、description、source属性（不包含paragraphIndex）
 7. **Entity属性完整性:** Entity节点必须包含name、firstMentionChapter、firstMentionSource属性
 8. **State属性规范:** State节点必须包含stateType和stateValue属性（中文值）
-9. **时间戳格式验证:** timestamp必须使用datetime('{{baseTimestamp}}')格式，不可自定义
+9. **时间戳格式验证:** timestamp必须使用datetime('{{baseTimestamp}}')格式，精度为日期级（T00:00:00）
 10. **信息来源验证:** 所有新节点必须来自indexText，不能来自lastContext或nextContext
 11. **空输出验证:** 如果indexText无新信息，必须返回空字符串而非文字说明
 12. **属性命名规范:** 所有属性键名和值（业务相关）必须使用中文
@@ -422,13 +420,12 @@ RETURN e, r, affected, newState
 // 注意: StoryEvent是Event的特化，继承所有Event属性
 // 额外属性:
 - uuid: String - 全局唯一标识符
-- timestamp: DateTime - 事件发生时间
+- timestamp: DateTime - 事件发生时间（章节级精度：YYYY-MM-DDT00:00:00）
 - eventType: String - 可为 "Generation" | "Transformation" | "Observation" | "Termination"
-- source: String - 数据来源(格式: "第X章 章节名 - PY")
+- source: String - 数据来源(格式: "第X章 章节名")
 - confidence: Float - 置信度
 - description: String - 事件描述
 - chapterIndex: Integer - 章节索引
-- paragraphIndex: Integer - 段落索引
 - 章节: String - 所属章节(可选)
 - 情节重要度: Integer - 1-10评分(可选)
 ```
@@ -481,11 +478,10 @@ CREATE (e:Event:StoryEvent {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-15T10:00:00'),
   eventType: 'Generation',
-  source: '第一章 落魄天才 - P1',
+  source: '第一章 落魄天才',
   confidence: 1.0,
   description: '角色首次登场',
   chapterIndex: 1,
-  paragraphIndex: 1,
   章节: '第一章'
 })
 
@@ -497,7 +493,7 @@ CREATE (c:Entity:Character {
   别名: ['岩枭'],
   createdAt: datetime('2025-10-15T10:00:00'),
   firstMentionChapter: 1,
-  firstMentionSource: '第一章 落魄天才 - P1'
+  firstMentionSource: '第一章 落魄天才'
 })
 
 // 3. 创建初始状态
@@ -533,11 +529,10 @@ WITH entity, rel, currentState,
        uuid: randomUUID(),
        timestamp: datetime($event_timestamp),
        eventType: 'Transformation',
-       source: '第五章 突破 - P30',
+       source: '第五章 突破',
        confidence: 1.0,
        description: '境界突破',
        chapterIndex: 5,
-       paragraphIndex: 30,
        章节: '第五章'
      } AS eventProps,
      {
@@ -576,11 +571,10 @@ CREATE (e:Event:StoryEvent {
   uuid: randomUUID(),
   timestamp: datetime('2025-10-15T14:00:00'),
   eventType: 'Observation',
-  source: '第三章 会面 - P15',
+  source: '第三章 会面',
   confidence: 1.0,
   description: '萧炎与纳兰嫣然会面',
   chapterIndex: 3,
-  paragraphIndex: 15,
   章节: '第三章'
 })
 
@@ -617,9 +611,9 @@ CREATE (e)-[:OBSERVES]->(c2)
 
 **事件层验证:**
 7. **事件参与者完整性:** 所有`:StoryEvent`必须至少有一个`:PARTICIPATED_IN`关系或直接的GENERATES/TRANSFORMS/OBSERVES/TERMINATES关系
-8. **source格式验证:** Event.source必须符合格式"第X章 章节名 - PY"（X和Y为数字）
-9. **chapterIndex与paragraphIndex范围:** 必须为正整数，且chapterIndex >= 1, paragraphIndex >= 1
-10. **timestamp与chapterIndex一致性:** Event.timestamp的日期部分必须等于 (baseDate + chapterIndex天)
+8. **source格式验证:** Event.source必须符合格式"第X章 章节名"（X为数字，不包含段落标记）
+9. **chapterIndex范围:** 必须为正整数，且chapterIndex >= 1
+10. **timestamp与chapterIndex一致性:** Event.timestamp的日期部分必须等于 (baseDate + chapterIndex天)，时间部分必须为T00:00:00
 
 **关系层验证:**
 11. **禁止直接持有关系:** 不允许直接创建 (Character)-[:POSSESSES]->(Item)，必须通过Item的State节点记录拥有者
@@ -806,18 +800,18 @@ AI应:
 **信息提取边界约束：**
 
 1. **唯一信息源原则：**
-   - **所有新的Entity、Event、State必须且只能从indexText（当前行）提取**
-   - 禁止从lastContext（前文/上一段）提取任何新实体或事件
-   - 禁止从nextContext（后文/下一段）生成任何Cypher语句
+   - **所有新的Entity、Event、State必须且只能从indexText（当前章完整内容）提取**
+   - 禁止从lastContext（上一章完整内容）提取任何新实体或事件
+   - 禁止从nextContext（下一章完整内容）生成任何Cypher语句
 
 2. **上下文作用域限定：**
    
-   **lastContext（前文）的唯一作用：**
+   **lastContext（上一章完整内容）的唯一作用：**
    - 确认实体名称一致性（避免同一角色不同别名被识别为多个实体）
    - 推断前置状态（用于WHERE子句验证状态转换的前置条件）
    - 示例：如果lastContext提到"萧炎苦修三年，始终停留在三段斗之气"，仅用于推断当前状态为"三段斗之气"，不从中提取新信息
 
-   **nextContext（后文）的唯一作用：**
+   **nextContext（下一章完整内容）的唯一作用：**
    - 消除代词歧义（如"他"指代哪个角色）
    - 理解上下文语境（辅助判断事件类型和语义）
    - 示例：如果nextContext提到"云岚宗弟子们露出震惊之色"，仅用于理解当前事件的重要性，不生成关于"云岚宗弟子"的实体
@@ -837,12 +831,11 @@ AI应:
 
 输入上下文：
 ```
-lastContext（前文）："萧炎苦修三年，始终停留在三段斗之气。"
-indexText（当前行）："萧炎终于突破至四段斗之气。"
-nextContext（后文）："云岚宗弟子们露出震惊之色。"
-baseTimestamp: 2025-01-06T00:30:00
-chapterIndex: 5
-paragraphIndex: 30
+lastContext（上一章完整内容）："萧炎苦修三年，始终停留在三段斗之气。"
+indexText（当前章完整内容）："萧炎终于突破至四段斗之气。"
+nextContext（下一章完整内容）："云岚宗弟子们露出震惊之色。"
+baseTimestamp: 2025-01-06T00:00:00
+chapterIndex: 6
 ```
 
 正确的处理流程：
@@ -852,19 +845,22 @@ paragraphIndex: 30
    - Event: Transformation（突破事件）
    - State: 境界状态"四段斗之气"（新状态）
 3. **nextContext的作用：** 确认事件重要性，但不生成关于"云岚宗弟子"的任何节点
-4. **生成Cypher：** 参考模板2（状态转换场景），使用baseTimestamp=2025-01-06T00:30:00
+4. **生成Cypher：** 参考模板2（状态转换场景），使用baseTimestamp=2025-01-06T00:00:00
 
 错误示例（禁止）：
 - ❌ 从lastContext生成"萧炎苦修三年"的事件
 - ❌ 从nextContext生成"云岚宗弟子"的实体
 - ❌ 自定义timestamp为当前系统时间
+- ❌ 在Event节点中包含paragraphIndex属性
 - ❌ 返回"无新信息可提取"的文字说明
 
 正确示例：
 - ✅ 仅从indexText提取"萧炎突破至四段斗之气"
 - ✅ 使用lastContext确认前置状态为"三段斗之气"
 - ✅ 使用nextContext理解突破的重要性（可提升confidence值）
-- ✅ 使用提供的baseTimestamp生成Event.timestamp
+- ✅ 使用提供的baseTimestamp生成Event.timestamp（日期级精度T00:00:00）
+- ✅ Event节点不包含paragraphIndex属性
+- ✅ Event.source格式为"第X章 章节名"（不包含段落标记）
 - ✅ 如果indexText无新信息，返回空字符串
 
 **示例工作流程:**
