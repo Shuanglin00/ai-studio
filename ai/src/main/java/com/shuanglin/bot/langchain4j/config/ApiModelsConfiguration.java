@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import jakarta.annotation.Resource;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -36,10 +37,9 @@ public class ApiModelsConfiguration {
 	public OllamaChatModel decomposeLanguageModel(OllamaProperties ollamaProperties) {
 		return OllamaChatModel.builder()
 				.baseUrl(ollamaProperties.getUrl())
-				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
-				.logRequests(true)
-				.logResponses(true)
-				.modelName("gemma3:12b")
+				.temperature(ollamaProperties.getTemperature())
+				.timeout(Duration.ofMinutes(10)) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.modelName(ollamaProperties.getModelName())
 				.build();
 	}
 
@@ -47,7 +47,8 @@ public class ApiModelsConfiguration {
 	public OllamaChatModel chatLanguageModel(OllamaProperties ollamaProperties) {
 		return OllamaChatModel.builder()
 				.baseUrl(ollamaProperties.getUrl())
-				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.temperature(ollamaProperties.getTemperature())
+				.timeout(Duration.ofMinutes(10)) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
 				.logRequests(true)
 				.logResponses(true)
 				.modelName(ollamaProperties.getModelName())
@@ -58,7 +59,8 @@ public class ApiModelsConfiguration {
 	public OllamaStreamingChatModel chatStreamingLanguageModel(OllamaProperties ollamaProperties) {
 		return OllamaStreamingChatModel.builder()
 				.baseUrl(ollamaProperties.getUrl())
-				.temperature(ollamaProperties.getTemperature()) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
+				.temperature(ollamaProperties.getTemperature())
+				.timeout(Duration.ofMinutes(10)) // 模型温度，控制模型生成的随机性，0-1之间，越大越多样性
 				.logRequests(true)
 				.logResponses(true)
 				.modelName(ollamaProperties.getModelName())
@@ -93,6 +95,7 @@ public class ApiModelsConfiguration {
 				.topP(geminiProperties.getTopP())
 				.topK(geminiProperties.getTopK())
 				.listeners(chatModelListenerList)
+				.timeout(Duration.ofMinutes(10))
 				.build();
 	}
 
@@ -105,6 +108,7 @@ public class ApiModelsConfiguration {
 				.topP(geminiProperties.getTopP())
 				.topK(geminiProperties.getTopK())
 				.listeners(chatModelListenerList)
+				.timeout(Duration.ofMinutes(10))
 				.build();
 	}
 
